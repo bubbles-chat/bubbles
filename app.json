@@ -19,7 +19,9 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.youssef_negm.bubbles",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
