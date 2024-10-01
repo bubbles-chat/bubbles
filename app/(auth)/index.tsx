@@ -92,7 +92,7 @@ export default function Index() {
       setEmail((prev: InputState): InputState => ({
         ...prev,
         isFocused: false,
-        validation: validateEmail(email.value)
+        validation: emailValidationResult
       }))
 
       if (emailValidationResult.isValid) {
