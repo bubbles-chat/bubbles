@@ -1,5 +1,5 @@
 import { ReactNode } from "react"
-import { TextInputProps, TouchableOpacityProps, ViewProps } from "react-native"
+import { ModalProps, TextInputProps, TouchableOpacityProps, ViewProps } from "react-native"
 
 export interface CustomTextInputProps extends TextInputProps {
     Icon?: ReactNode
@@ -9,13 +9,15 @@ export interface CustomTextInputProps extends TextInputProps {
     darkBorderColor?: string
 }
 
+export interface Validation {
+    isValid: boolean
+    message: string
+}
+
 export interface InputState {
     value: string
     isFocused: boolean
-    validation?: {
-        isValid: boolean
-        message: string
-    }
+    validation?: Validation
 }
 
 export interface CustomButtonProps extends TouchableOpacityProps {
@@ -28,4 +30,9 @@ export interface CustomButtonProps extends TouchableOpacityProps {
 export interface ThemedLinearGradientProps extends ViewProps {
     lightGradient?: string[]
     darkGradient?: string[]
+}
+
+export interface LoadingProps extends ModalProps {
+    lightColor?: string
+    darkColor?: string
 }
