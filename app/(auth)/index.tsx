@@ -11,6 +11,11 @@ import ThemedLinearGradient from "@/components/ThemedLinearGradient";
 import Loading from "@/components/Loading";
 import { validateEmail } from "@/utils/inputValidation";
 import auth from '@react-native-firebase/auth'
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+})
 
 export default function Index() {
   const [email, setEmail] = useState<InputState>({
@@ -101,8 +106,22 @@ export default function Index() {
     }
   }
 
-  const handleSignInWIthGoogleOnPress = (e: GestureResponderEvent): void => {
-    console.log('hello google');
+  const handleSignInWIthGoogleOnPress = async (e: GestureResponderEvent): Promise<void> => {
+    setIsLoading(true)
+    try {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true })
+
+      const { data } = await GoogleSignin.signIn()
+      const googleCredential = auth.GoogleAuthProvider.credential(data?.idToken as string | null)
+
+      await auth().signInWithCredential(googleCredential)
+    } catch (e) {
+      console.log(e);
+      
+      setError(e as Error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleForgotPassowrdOnPress = () => {
