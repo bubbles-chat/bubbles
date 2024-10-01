@@ -1,7 +1,7 @@
 import { GestureResponderEvent, NativeSyntheticEvent, Pressable, StyleSheet, Text, TextInputFocusEventData, useColorScheme, View } from 'react-native'
 import React, { useMemo, useState } from 'react'
 import CustomTextInput from '@/components/CustomTextInput'
-import { InputState } from '@/types/types'
+import { InputState, Validation } from '@/types/types'
 import { AntDesign, MaterialIcons } from '@expo/vector-icons'
 import CustomButton from '@/components/CustomButton'
 import { router } from 'expo-router'
@@ -9,6 +9,9 @@ import { ThemedText } from '@/components/ThemedText'
 import { Colors } from '@/constants/Colors'
 import ThemedLinearGradient from '@/components/ThemedLinearGradient'
 import { useHeaderHeight } from '@react-navigation/elements'
+import { validateConfirmationPassword, validateEmail, validatePassword } from '@/utils/inputValidation'
+import auth from '@react-native-firebase/auth'
+import Loading from '@/components/Loading'
 
 const SignUp = () => {
     const [email, setEmail] = useState<InputState>({
@@ -35,6 +38,7 @@ const SignUp = () => {
             message: ''
         }
     })
+    const [isLoading, setIsLoading] = useState(false)
 
     const headerHeight = useHeaderHeight()
 
@@ -59,7 +63,8 @@ const SignUp = () => {
     const handleEmailOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>): void => {
         setEmail((prev: InputState): InputState => ({
             ...prev,
-            isFocused: false
+            isFocused: false,
+            validation: validateEmail(email.value)
         }))
     }
 
@@ -77,10 +82,19 @@ const SignUp = () => {
         }))
     }
 
-    const handleConfirmPasswordOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>): void => {
+    const handlePasswordOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>): void => {
         setPassword((prev: InputState): InputState => ({
             ...prev,
-            isFocused: false
+            isFocused: false,
+            validation: validatePassword(password.value)
+        }))
+    }
+
+    const handleConfirmPasswordOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>): void => {
+        setConfirmPassword((prev: InputState): InputState => ({
+            ...prev,
+            isFocused: false,
+            validation: validateConfirmationPassword(password.value, confirmPassword.value)
         }))
     }
 
@@ -98,15 +112,36 @@ const SignUp = () => {
         }))
     }
 
-    const handlePasswordOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>): void => {
-        setConfirmPassword((prev: InputState): InputState => ({
-            ...prev,
-            isFocused: false
-        }))
-    }
+    const handleSignUpOnPress = async (e: GestureResponderEvent): Promise<void> => {
+        setIsLoading(true)
+        try {
+            const emailValidationResult: Validation = validateEmail(email.value)
+            const passwordValidationResult: Validation = validatePassword(password.value)
+            const confirmPasswordValidationResult: Validation = validateConfirmationPassword(password.value, confirmPassword.value)
 
-    const handleSignUpOnPress = (e: GestureResponderEvent): void => {
-        console.log('hello signup');
+            setEmail((prev: InputState): InputState => ({
+                ...prev,
+                validation: emailValidationResult
+            }))
+
+            setPassword((prev: InputState): InputState => ({
+                ...prev,
+                validation: passwordValidationResult
+            }))
+
+            setConfirmPassword((prev: InputState): InputState => ({
+                ...prev,
+                validation: confirmPasswordValidationResult
+            }))
+
+            if (emailValidationResult.isValid && passwordValidationResult.isValid && confirmPasswordValidationResult.isValid) {
+                await auth().createUserWithEmailAndPassword(email.value, password.value)
+            }
+        } catch (e) {
+            alert('Registeration failed! Try again later.')
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const handleSignInOnPress = () => {
@@ -119,6 +154,7 @@ const SignUp = () => {
 
     return (
         <ThemedLinearGradient style={[styles.container, { paddingTop: headerHeight + 16 }]}>
+            <Loading visible={isLoading} />
             <CustomTextInput
                 state={email}
                 hasValidation={true}
