@@ -1,4 +1,4 @@
-import { GestureResponderEvent, NativeSyntheticEvent, Pressable, StyleSheet, Text, TextInputFocusEventData, useColorScheme, View } from 'react-native'
+import { Alert, GestureResponderEvent, NativeSyntheticEvent, Pressable, StyleSheet, Text, TextInputFocusEventData, useColorScheme, View } from 'react-native'
 import React, { useMemo, useState } from 'react'
 import CustomTextInput from '@/components/CustomTextInput'
 import { InputState, Validation } from '@/types/types'
@@ -138,7 +138,10 @@ const SignUp = () => {
                 await auth().createUserWithEmailAndPassword(email.value, password.value)
             }
         } catch (e) {
-            alert('Registeration failed! Try again later.')
+            Alert.alert('Registeration failed', 'Try again later', [{
+                text: 'OK',
+                style: 'default'
+            }])
         } finally {
             setIsLoading(false)
         }
