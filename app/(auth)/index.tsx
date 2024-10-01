@@ -8,6 +8,14 @@ import { router } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { Colors } from "@/constants/Colors";
 import ThemedLinearGradient from "@/components/ThemedLinearGradient";
+import Loading from "@/components/Loading";
+import { validateEmail } from "@/utils/inputValidation";
+import auth from '@react-native-firebase/auth'
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+})
 
 export default function Index() {
   const [email, setEmail] = useState<InputState>({
@@ -26,6 +34,9 @@ export default function Index() {
       message: ''
     }
   })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+
   const colorScheme = useColorScheme()
 
   const iconColor = useMemo(() => colorScheme === 'dark' ? Colors.dark.text : Colors.light.text, [colorScheme])
@@ -47,7 +58,8 @@ export default function Index() {
   const handleEmailOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>): void => {
     setEmail((prev: InputState): InputState => ({
       ...prev,
-      isFocused: false
+      isFocused: false,
+      validation: validateEmail(email.value)
     }))
   }
 
@@ -72,12 +84,44 @@ export default function Index() {
     }))
   }
 
-  const handleSignInOnPress = (e: GestureResponderEvent): void => {
-    console.log('hello sign in');
+  const handleSignInOnPress = async (e: GestureResponderEvent): Promise<void> => {
+    setIsLoading(true)
+    try {
+      const emailValidationResult = validateEmail(email.value)
+
+      setEmail((prev: InputState): InputState => ({
+        ...prev,
+        isFocused: false,
+        validation: emailValidationResult
+      }))
+
+      if (emailValidationResult.isValid) {
+        await auth().signInWithEmailAndPassword(email.value, password.value)
+        setError(null)
+      }
+    } catch (e) {
+      setError(e as Error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleSignInWIthGoogleOnPress = (e: GestureResponderEvent): void => {
-    console.log('hello google');
+  const handleSignInWIthGoogleOnPress = async (e: GestureResponderEvent): Promise<void> => {
+    setIsLoading(true)
+    try {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true })
+
+      const { data } = await GoogleSignin.signIn()
+      const googleCredential = auth.GoogleAuthProvider.credential(data?.idToken as string | null)
+
+      await auth().signInWithCredential(googleCredential)
+    } catch (e) {
+      console.log(e);
+      
+      setError(e as Error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleForgotPassowrdOnPress = () => {
@@ -90,6 +134,7 @@ export default function Index() {
 
   return (
     <ThemedLinearGradient style={styles.container}>
+      <Loading visible={isLoading} />
       <View style={styles.iconView}>
         <Image
           source={require('@/assets/images/icon.png')}
@@ -128,6 +173,7 @@ export default function Index() {
         onFocus={handlePasswordOnFocus}
         autoCapitalize="none"
       />
+      {error && <Text style={styles.errorMessage}>Invalid credential</Text>}
       <Pressable style={styles.pressable} onPress={handleForgotPassowrdOnPress}>
         <ThemedText style={styles.secondryText}>Forgot password?</ThemedText>
       </Pressable>
@@ -178,5 +224,8 @@ const styles = StyleSheet.create({
   },
   pressable: {
     padding: 8
+  },
+  errorMessage: {
+    color: 'red'
   }
 })
