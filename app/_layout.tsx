@@ -1,7 +1,9 @@
 import Loading from "@/components/Loading";
+import { store } from "@/store/store";
 import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { Provider } from "react-redux";
 
 export default function RootLayout() {
   const [isInitializing, setIsInitializing] = useState(true)
@@ -9,8 +11,9 @@ export default function RootLayout() {
 
   const router = useRouter()
 
-  const onAuthStateChanged = (user: FirebaseAuthTypes.User | null): void => {
-    console.log('onAuthStateChanged', user);
+  const onAuthStateChanged = async (user: FirebaseAuthTypes.User | null): Promise<void> => {
+    const token = await user?.getIdToken()
+    console.log('onAuthStateChanged', token);
     setUser(user)
 
     if (isInitializing) setIsInitializing(false)
@@ -36,9 +39,11 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack>
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
+    <Provider store={store}>
+      <Stack>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </Provider>
   );
 }
