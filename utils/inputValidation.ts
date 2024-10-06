@@ -1,6 +1,20 @@
 import { emailRegex, passwordRegex } from "@/constants/Regex";
 import { Validation } from "@/types/types";
 
+export const validateUsername = (username: string): Validation => {
+    if (username.length === 0) {
+        return {
+            isValid: false,
+            message: 'Please enter a username'
+        }
+    } else {
+        return {
+            isValid: true,
+            message: ''
+        }
+    }
+}
+
 export const validateEmail = (email: string): Validation => {
     if (email.length === 0) {
         return {

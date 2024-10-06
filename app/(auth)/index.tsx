@@ -12,6 +12,9 @@ import Loading from "@/components/Loading";
 import { validateEmail } from "@/utils/inputValidation";
 import auth from '@react-native-firebase/auth'
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import client from "@/api/client";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { getUserByEmailAsync } from "@/store/userAsyncThunks";
 
 GoogleSignin.configure({
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
@@ -36,6 +39,8 @@ export default function Index() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+
+  const dispatch = useAppDispatch()
 
   const colorScheme = useColorScheme()
 
@@ -97,6 +102,11 @@ export default function Index() {
 
       if (emailValidationResult.isValid) {
         await auth().signInWithEmailAndPassword(email.value, password.value)
+
+        const token = await auth().currentUser?.getIdToken()
+        client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+        dispatch(getUserByEmailAsync({ email: auth().currentUser?.email as string }))
         setError(null)
       }
     } catch (e) {
@@ -115,9 +125,15 @@ export default function Index() {
       const googleCredential = auth.GoogleAuthProvider.credential(data?.idToken as string | null)
 
       await auth().signInWithCredential(googleCredential)
+
+      const token = await auth().currentUser?.getIdToken()
+      const email = auth().currentUser?.email as string
+      client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+      dispatch(getUserByEmailAsync({ email }))
     } catch (e) {
       console.log(e);
-      
+
       setError(e as Error)
     } finally {
       setIsLoading(false)

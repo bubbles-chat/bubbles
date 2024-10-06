@@ -21,6 +21,7 @@
     "@react-native-google-signin/google-signin": "^13.1.0",
     "@react-navigation/native": "^6.0.2",
     "@reduxjs/toolkit": "^2.2.7",
+    "axios": "^1.7.7",
     "bubbles": "file:",
     "expo": "~51.0.28",
     "expo-blur": "~13.0.2",

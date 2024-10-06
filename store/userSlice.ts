@@ -1,5 +1,6 @@
 import { User } from "@/models/User.model";
 import { createSlice } from "@reduxjs/toolkit";
+import { addUserAsync, getUserByEmailAsync, signOutAsync } from "./userAsyncThunks";
 
 interface UserState {
     user: User | null
@@ -14,7 +15,17 @@ const userSlice = createSlice({
     initialState,
     reducers: {}, // the reducers property is required by typescript even if it is empty
     extraReducers: (builder) => {
+        builder.addCase(addUserAsync.fulfilled, (state, action) => {
+            state.user = action.payload
+        })
 
+        builder.addCase(getUserByEmailAsync.fulfilled, (state, action) => {
+            state.user = action.payload
+        })
+
+        builder.addCase(signOutAsync.fulfilled, (state, _) => {
+            state.user = null
+        })
     }
 })
 

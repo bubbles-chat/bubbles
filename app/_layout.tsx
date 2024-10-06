@@ -1,20 +1,31 @@
+import client from "@/api/client";
 import Loading from "@/components/Loading";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { useAppSelector } from "@/hooks/useAppSelector";
 import { store } from "@/store/store";
+import { getUserByEmailAsync } from "@/store/userAsyncThunks";
 import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Provider } from "react-redux";
 
-export default function RootLayout() {
+function RootLayout() {
   const [isInitializing, setIsInitializing] = useState(true)
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null>()
+  const user = useAppSelector(state => state.user.user)
+  
+  const dispatch = useAppDispatch()
 
   const router = useRouter()
 
   const onAuthStateChanged = async (user: FirebaseAuthTypes.User | null): Promise<void> => {
     const token = await user?.getIdToken()
-    console.log('onAuthStateChanged', token);
-    setUser(user)
+    const email = user?.email ?? ''
+
+    if (user) {
+      client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      console.log('onAuthStateChanged', token);
+      dispatch(getUserByEmailAsync({ email }))
+    }
 
     if (isInitializing) setIsInitializing(false)
   }
@@ -39,11 +50,17 @@ export default function RootLayout() {
   }
 
   return (
-    <Provider store={store}>
-      <Stack>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-    </Provider>
+    <Stack>
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
   );
+}
+
+export default function Layout() {
+  return (
+    <Provider store={store}>
+      <RootLayout />
+    </Provider>
+  )
 }
