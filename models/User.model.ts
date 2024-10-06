@@ -1,11 +1,10 @@
-export interface User {
+import Chat from "./Chat.model"
+
+export default interface User {
     _id: string,
     displayName: string,
     email: string,
-    chats: string[],
-    connections: string[],
-    pendingRequests: string[],
-    pendingRequestsSeen: boolean,
+    chats: Chat[] | string[],
+    connections: User[] | string[],
     photoURL: string,
-    sentRequests: string[]
 }
