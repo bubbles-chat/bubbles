@@ -9,9 +9,13 @@ import { ThemedText } from '@/components/ThemedText'
 import { Colors } from '@/constants/Colors'
 import ThemedLinearGradient from '@/components/ThemedLinearGradient'
 import { useHeaderHeight } from '@react-navigation/elements'
-import { validateConfirmationPassword, validateEmail, validatePassword } from '@/utils/inputValidation'
+import { validateConfirmationPassword, validateEmail, validatePassword, validateUsername } from '@/utils/inputValidation'
 import auth from '@react-native-firebase/auth'
 import Loading from '@/components/Loading'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
+import { addUserAsync } from '@/store/userAsyncThunks'
+import client from '@/api/client'
+import { GoogleSignin } from '@react-native-google-signin/google-signin'
 
 const SignUp = () => {
     const [email, setEmail] = useState<InputState>({
@@ -38,6 +42,14 @@ const SignUp = () => {
             message: ''
         }
     })
+    const [username, setUsername] = useState<InputState>({
+        value: '',
+        isFocused: false,
+        validation: {
+            isValid: true,
+            message: ''
+        }
+    })
     const [isLoading, setIsLoading] = useState(false)
 
     const headerHeight = useHeaderHeight()
@@ -45,6 +57,30 @@ const SignUp = () => {
     const colorScheme = useColorScheme()
 
     const iconColor = useMemo(() => colorScheme === 'dark' ? Colors.dark.text : Colors.light.text, [colorScheme])
+
+    const dispatch = useAppDispatch()
+
+    const handleUsernameOnCHangeText = (text: string): void => {
+        setUsername(prev => ({
+            ...prev,
+            value: text
+        }))
+    }
+
+    const handleUsernameOnFocus = () => {
+        setUsername(prev => ({
+            ...prev,
+            isFocused: true
+        }))
+    }
+
+    const handleUsernameOnBlur = () => {
+        setUsername(prev => ({
+            ...prev,
+            isFocused: false,
+            validation: validateUsername(username.value)
+        }))
+    }
 
     const handleEmailOnChangeText = (text: string): void => {
         setEmail((prev: InputState): InputState => ({
@@ -115,9 +151,15 @@ const SignUp = () => {
     const handleSignUpOnPress = async (e: GestureResponderEvent): Promise<void> => {
         setIsLoading(true)
         try {
+            const usernameValidationResult: Validation = validateUsername(username.value)
             const emailValidationResult: Validation = validateEmail(email.value)
             const passwordValidationResult: Validation = validatePassword(password.value)
             const confirmPasswordValidationResult: Validation = validateConfirmationPassword(password.value, confirmPassword.value)
+
+            setUsername((prev: InputState): InputState => ({
+                ...prev,
+                validation: usernameValidationResult
+            }))
 
             setEmail((prev: InputState): InputState => ({
                 ...prev,
@@ -134,8 +176,18 @@ const SignUp = () => {
                 validation: confirmPasswordValidationResult
             }))
 
-            if (emailValidationResult.isValid && passwordValidationResult.isValid && confirmPasswordValidationResult.isValid) {
+            if (usernameValidationResult.isValid &&
+                emailValidationResult.isValid &&
+                passwordValidationResult.isValid &&
+                confirmPasswordValidationResult.isValid
+            ) {
                 await auth().createUserWithEmailAndPassword(email.value, password.value)
+                await auth().currentUser?.updateProfile({ displayName: username.value })
+
+                const token = await auth().currentUser?.getIdToken()
+                client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+                dispatch(addUserAsync({ email: email.value, displayName: username.value, photoURL: '' }))
             }
         } catch (e) {
             Alert.alert('Registeration failed', 'Try again later', [{
@@ -155,9 +207,48 @@ const SignUp = () => {
         }
     }
 
+    const handleSignUpWithGoogleOnPress = async (): Promise<void> => {
+        setIsLoading(true)
+        try {
+            await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true })
+
+            const { data } = await GoogleSignin.signIn()
+            const googleCredential = auth.GoogleAuthProvider.credential(data?.idToken as string | null)
+
+            await auth().signInWithCredential(googleCredential)
+
+            const token = await auth().currentUser?.getIdToken()
+            const email = auth().currentUser?.email as string
+            const displayName = auth().currentUser?.displayName as string
+            const photoURL = auth().currentUser?.photoURL as string
+            client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+            dispatch(addUserAsync({ email, displayName, photoURL }))
+        } catch (e) {
+            console.log(e);
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     return (
         <ThemedLinearGradient style={[styles.container, { paddingTop: headerHeight + 16 }]}>
             <Loading visible={isLoading} />
+            <CustomTextInput
+                state={username}
+                hasValidation={true}
+                placeholder='Username'
+                Icon={<AntDesign
+                    name='user'
+                    size={18}
+                    color={username.validation?.isValid ? iconColor : 'red'}
+                />}
+                onChangeText={handleUsernameOnCHangeText}
+                onBlur={handleUsernameOnBlur}
+                onFocus={handleUsernameOnFocus}
+                keyboardType='default'
+            />
+            <View style={styles.separator} />
             <CustomTextInput
                 state={email}
                 hasValidation={true}
@@ -210,6 +301,12 @@ const SignUp = () => {
                 text='Sign up'
                 onPress={handleSignUpOnPress}
             />
+            <ThemedText style={styles.orText}>Or</ThemedText>
+            <CustomButton
+                onPress={handleSignUpWithGoogleOnPress}
+                text="Sign up with Google"
+                Icon={<AntDesign name="google" size={20} color={iconColor} />}
+            />
             <View style={styles.separator} />
             <Pressable style={styles.pressable} onPress={handleSignInOnPress}>
                 <ThemedText>Already have an account? <Text style={styles.secondryText}>Sign in</Text></ThemedText>
@@ -234,5 +331,9 @@ const styles = StyleSheet.create({
     },
     pressable: {
         padding: 8
+    },
+    orText: {
+        textAlign: 'center',
+        fontSize: 16
     }
 })
