@@ -1,10 +1,10 @@
 import { addUser, getUserByEmail } from "@/api/userApi";
-import { User } from "@/models/User.model";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { router } from "expo-router";
 import { Alert } from "react-native";
 import auth from '@react-native-firebase/auth'
+import User from "@/models/User.model";
 
 export const addUserAsync = createAsyncThunk('user/addUserAsync', async ({
     email,

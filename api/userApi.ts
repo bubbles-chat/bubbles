@@ -1,6 +1,6 @@
 import { AxiosResponse } from "axios";
 import client from "./client";
-import { User } from "@/models/User.model";
+import User from "@/models/User.model";
 
 export async function addUser(email: string, displayName: string, photoURL: string): Promise<AxiosResponse<{ message: string, user: User }>> {
     return await client.post('/user/addUser', {
