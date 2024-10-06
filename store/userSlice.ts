@@ -1,6 +1,6 @@
-import { User } from "@/models/User.model";
 import { createSlice } from "@reduxjs/toolkit";
 import { addUserAsync, getUserByEmailAsync, signOutAsync } from "./userAsyncThunks";
+import User from "@/models/User.model";
 
 interface UserState {
     user: User | null
