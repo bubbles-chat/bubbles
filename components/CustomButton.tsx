@@ -8,7 +8,7 @@ const CustomButton: React.FC<CustomButtonProps> = (props) => {
     const background = useThemeColor({ dark: props.darkBackground, light: props.lightBackground }, 'buttonBackground') as string
 
     return (
-        <TouchableOpacity style={[styles.container, { backgroundColor: background }]} {...props}>
+        <TouchableOpacity style={[styles.container, { backgroundColor: background }, props.style]} {...props}>
             {props.Icon && <View style={styles.iconView}>
                 {props.Icon}
             </View>}
