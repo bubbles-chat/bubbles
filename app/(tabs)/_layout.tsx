@@ -36,7 +36,8 @@ const TabLayout = () => {
           style={{ flex: 1, backgroundColor: 'transparent', borderTopRightRadius: 16, borderTopLeftRadius: 16 }}
         />,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: colorScheme === 'dark' ? Colors.dark.tabIconSelected : Colors.light.tabIconSelected
+        tabBarActiveTintColor: colorScheme === 'dark' ? Colors.dark.tabIconSelected : Colors.light.tabIconSelected,
+        tabBarHideOnKeyboard: true
       })}
     >
       <Tabs.Screen

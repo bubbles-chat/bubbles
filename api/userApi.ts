@@ -11,3 +11,7 @@ export async function addUser(email: string, displayName: string, photoURL: stri
 export async function getUserByEmail(email: string): Promise<AxiosResponse<{ message: string, user: User }>> {
     return await client.get(`/user/getUserByEmail/${email}`)
 }
+
+export async function getUserByUsername(username: string, limit: number, skip: number): Promise<AxiosResponse<{ message: string, users: User[] }>> {
+    return await client.get(`/user/getUserByUsername/${username}?limit=${limit}&skip=${skip}`)
+}
