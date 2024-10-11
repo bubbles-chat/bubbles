@@ -1,10 +1,14 @@
-import { PermissionsAndroid, StyleSheet, View } from 'react-native'
+import { PermissionsAndroid, Platform, StyleSheet, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '@/components/ThemedText'
 import CustomModal from '@/components/CustomModal'
 import CustomButton from '@/components/CustomButton'
+import { AxiosError } from 'axios'
+import messaging from '@react-native-firebase/messaging'
+import { addToken } from '@/api/notificationTokenApi'
+import * as Notification from 'expo-notifications'
 
 const Home = () => {
   const [modalVisible, setModalVisible] = useState(false)
@@ -15,13 +19,30 @@ const Home = () => {
   }
 
   const handleAcceptOnPress = async () => {
-    const requestResult = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
+    try {
+      const requestResult = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
 
-    if (requestResult === 'granted') {
-      // TODO: get device token
+      if (requestResult === 'granted') {
+        if (Platform.OS === 'android') {
+          await Notification.setNotificationChannelAsync('default', {
+            name: 'default',
+            importance: Notification.AndroidImportance.MAX
+          })
+        }
+
+        await messaging().registerDeviceForRemoteMessages()
+        
+        const token = await messaging().getToken()
+        console.log('notification token:', token);
+
+        await addToken(token)
+      }
+
+      setModalVisible(false)
+    } catch (e) {
+      const err = e as AxiosError
+      console.error(err.response?.data);
     }
-
-    setModalVisible(false)
   }
 
   useEffect(() => {
