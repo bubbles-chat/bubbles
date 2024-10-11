@@ -5,6 +5,8 @@ import { router } from "expo-router";
 import { Alert } from "react-native";
 import auth from '@react-native-firebase/auth'
 import User from "@/models/User.model";
+import messaging from '@react-native-firebase/messaging'
+import { deleteToken } from "@/api/notificationTokenApi";
 
 export const addUserAsync = createAsyncThunk('user/addUserAsync', async ({
     email,
@@ -31,7 +33,7 @@ export const getUserByEmailAsync = createAsyncThunk('user/getUserByEmailAsync', 
 
         return response.data.user
     } catch (e) {
-        const err = e as AxiosError        
+        const err = e as AxiosError
 
         if (err.status) {
             Alert.alert('Authentication failed!', 'Please sign up first.', [{
@@ -56,6 +58,10 @@ export const getUserByEmailAsync = createAsyncThunk('user/getUserByEmailAsync', 
 
 export const signOutAsync = createAsyncThunk('user/signOutAsync', async (): Promise<void> => {
     try {
+        const token = await messaging().getToken()
+
+        await messaging().deleteToken() // unregistering device token from firebase
+        await deleteToken(token) // deleting device token from the database
         await auth().signOut()
     } catch (e) {
         Alert.alert('Sign out failed', 'Please try again later', [{
