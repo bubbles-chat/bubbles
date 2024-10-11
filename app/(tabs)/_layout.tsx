@@ -4,9 +4,17 @@ import { useColorScheme } from 'react-native'
 import { Colors } from '@/constants/Colors'
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import ProfileTabBarIcon from '@/components/ProfileTabBarIcon'
+import { useEffect } from 'react'
+import messaging from '@react-native-firebase/messaging'
 
 const TabLayout = () => {
-  const colorScheme = useColorScheme()  
+  const colorScheme = useColorScheme()
+
+  useEffect(() => {
+    messaging().setBackgroundMessageHandler(async remoteMessage => {
+      console.log("remoteMessage:", remoteMessage);
+    })
+  }, [])
 
   return (
     <Tabs
