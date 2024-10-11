@@ -25,6 +25,7 @@ export interface CustomButtonProps extends TouchableOpacityProps {
     Icon?: ReactNode
     lightBackground?: string
     darkBackground?: string
+    hasBackground?: boolean
 }
 
 export interface ThemedLinearGradientProps extends ViewProps {

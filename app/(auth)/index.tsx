@@ -1,6 +1,6 @@
 import CustomTextInput from "@/components/CustomTextInput";
 import { useMemo, useState } from "react";
-import { GestureResponderEvent, Image, NativeSyntheticEvent, Pressable, StyleSheet, Text, TextInputFocusEventData, useColorScheme, View } from "react-native";
+import { GestureResponderEvent, Image, NativeSyntheticEvent, PermissionsAndroid, Pressable, StyleSheet, Text, TextInputFocusEventData, useColorScheme, View } from "react-native";
 import { AntDesign, MaterialIcons } from '@expo/vector-icons'
 import { InputState } from "@/types/types";
 import CustomButton from "@/components/CustomButton";
@@ -15,6 +15,8 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import client from "@/api/client";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { getUserByEmailAsync } from "@/store/userAsyncThunks";
+import messaging from '@react-native-firebase/messaging'
+import { addToken } from "@/api/notificationTokenApi";
 
 GoogleSignin.configure({
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
@@ -106,6 +108,15 @@ export default function Index() {
         const token = await auth().currentUser?.getIdToken()
         client.defaults.headers.common['Authorization'] = `Bearer ${token}`
 
+        if (await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)) {
+          await messaging().registerDeviceForRemoteMessages()
+
+          const notificationToken = await messaging().getToken()
+          console.log('fcm token:', notificationToken);
+
+          await addToken(notificationToken)
+        }
+
         dispatch(getUserByEmailAsync({ email: auth().currentUser?.email as string }))
         setError(null)
       }
@@ -129,6 +140,15 @@ export default function Index() {
       const token = await auth().currentUser?.getIdToken()
       const email = auth().currentUser?.email as string
       client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+      if (await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)) {
+        await messaging().registerDeviceForRemoteMessages()
+
+        const notificationToken = await messaging().getToken()
+        console.log('fcm token:', notificationToken);
+
+        await addToken(notificationToken)
+      }
 
       dispatch(getUserByEmailAsync({ email }))
     } catch (e) {
