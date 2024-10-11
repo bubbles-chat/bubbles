@@ -1,4 +1,3 @@
-import React from 'react'
 import { Tabs } from 'expo-router'
 import { BlurView } from 'expo-blur'
 import { useColorScheme } from 'react-native'
@@ -7,7 +6,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import ProfileTabBarIcon from '@/components/ProfileTabBarIcon'
 
 const TabLayout = () => {
-  const colorScheme = useColorScheme()
+  const colorScheme = useColorScheme()  
 
   return (
     <Tabs
@@ -36,8 +35,7 @@ const TabLayout = () => {
           style={{ flex: 1, backgroundColor: 'transparent', borderTopRightRadius: 16, borderTopLeftRadius: 16 }}
         />,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: colorScheme === 'dark' ? Colors.dark.tabIconSelected : Colors.light.tabIconSelected,
-        tabBarHideOnKeyboard: true
+        tabBarActiveTintColor: colorScheme === 'dark' ? Colors.dark.tabIconSelected : Colors.light.tabIconSelected
       })}
     >
       <Tabs.Screen
