@@ -1,18 +1,30 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import User from '@/models/User.model'
 import { ThemedText } from './ThemedText'
+import { useState } from 'react'
 
-const UserFlatListItem = ({ item }: { item: User }) => {
+const UserFlatListItem = ({ item, onPressAdd }: { item: User, onPressAdd: () => Promise<void> }) => {
+    const [isLoading, setIsLoading] = useState(false)
+
+    const handleAddOnPress = async () => {
+        setIsLoading(true)
+        await onPressAdd()
+        setIsLoading(false)
+    }
+
     return (
         <View style={styles.container}>
             <Image
                 source={item.photoURL.length === 0 ? require('@/assets/images/avatar.png') : { uri: item.photoURL }}
-                style={styles.Image}
+                style={styles.image}
             />
             <ThemedText>{item.displayName}</ThemedText>
-            <TouchableOpacity style={styles.addBtn}>
+            {isLoading ? <ActivityIndicator
+                size={'large'}
+                style={styles.addBtn}
+            /> : <TouchableOpacity style={styles.addBtn} onPress={handleAddOnPress}>
                 <Text style={styles.addText}>Add</Text>
-            </TouchableOpacity>
+            </TouchableOpacity>}
         </View>
     )
 }
@@ -26,7 +38,7 @@ const styles = StyleSheet.create({
         padding: 8,
         alignItems: 'center',
     },
-    Image: {
+    image: {
         width: 50,
         height: 50,
         borderRadius: 50,
@@ -35,7 +47,8 @@ const styles = StyleSheet.create({
     },
     addBtn: {
         position: 'absolute',
-        right: 8
+        right: 8,
+        padding: 8
     },
     addText: {
         color: 'green'
