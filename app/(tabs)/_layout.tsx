@@ -31,8 +31,6 @@ const TabLayout = () => {
         },
         tabBarStyle: {
           position: 'absolute',
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
           overflow: 'hidden',
           height: 70
         },
@@ -61,7 +59,7 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
-        name='connections'
+        name='(connections)'
         options={{
           title: 'Connections',
           tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name='transit-connection-variant' color={color} size={size} />
