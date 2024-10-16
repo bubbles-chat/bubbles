@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, StyleSheet, Text, useColorScheme } from 'react-native'
+import { ActivityIndicator, FlatList, StyleSheet, useColorScheme } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import CustomTextInput from '@/components/CustomTextInput'
@@ -12,6 +12,7 @@ import { getUserByUsername } from '@/api/userApi'
 import { AxiosError } from 'axios'
 import UserFlatListItem from '@/components/UserFlatListItem'
 import UserListEmptyComponent from '@/components/UserListEmptyComponent'
+import { addRequest } from '@/api/requestApi'
 
 const Search = () => {
     const [search, setSearch] = useState<InputState>({
@@ -51,6 +52,20 @@ const Search = () => {
         if (hasMore) {
             await fetchUsersOnEndReached(page + 1)
             setPage(prev => prev + 1)
+        }
+    }
+
+    const handleOnPressAdd = async (id: string) => {
+        try {
+            const response = await addRequest(id)
+
+            if (response.status === 201) {
+                setUsers(prev => prev.filter(user => user._id !== id))
+            }
+        } catch (e) {
+            const err = e as AxiosError
+
+            console.error('handleAddOnPress:', err.response?.data);
         }
     }
 
@@ -132,7 +147,7 @@ const Search = () => {
             />
             <FlatList
                 data={users}
-                renderItem={({ item }) => <UserFlatListItem item={item} />}
+                renderItem={({ item }) => <UserFlatListItem item={item} onPressAdd={async () => await handleOnPressAdd(item._id)} />}
                 keyExtractor={(item, _) => item._id}
                 onEndReached={handleFlatListOnEndReached}
                 onEndReachedThreshold={0.5}
