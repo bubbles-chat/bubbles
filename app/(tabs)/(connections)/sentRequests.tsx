@@ -9,6 +9,7 @@ import { AxiosError } from 'axios'
 import { cancelRequest, getSentRequests } from '@/api/requestApi'
 import SentRequestFlatListItem from '@/components/SentRequestFlatListItem'
 import { useIsFocused } from '@react-navigation/native'
+import showToast from '@/components/Toast'
 
 const SentRequests = () => {
     const [sentRequests, setSentRequests] = useState<Request[]>([])
@@ -22,6 +23,7 @@ const SentRequests = () => {
 
             if (response.status === 200 && response.data.request) {
                 setSentRequests(prev => prev.filter(request => request._id !== response.data.request?._id))
+                showToast('Requet has been cancelled')
             }
         } catch (e) {
             const err = e as AxiosError
