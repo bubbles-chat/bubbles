@@ -7,12 +7,13 @@ import { getUserByEmailAsync } from "@/store/userAsyncThunks";
 import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { RootSiblingParent } from "react-native-root-siblings";
 import { Provider } from "react-redux";
 
 function RootLayout() {
   const [isInitializing, setIsInitializing] = useState(true)
   const user = useAppSelector(state => state.user.user)
-  
+
   const dispatch = useAppDispatch()
 
   const router = useRouter()
@@ -50,10 +51,12 @@ function RootLayout() {
   }
 
   return (
-    <Stack>
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
+    <RootSiblingParent>
+      <Stack>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </RootSiblingParent>
   );
 }
 
