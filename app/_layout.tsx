@@ -51,19 +51,19 @@ function RootLayout() {
   }
 
   return (
-    <RootSiblingParent>
-      <Stack>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-    </RootSiblingParent>
+    <Stack>
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
   );
 }
 
 export default function Layout() {
   return (
-    <Provider store={store}>
-      <RootLayout />
-    </Provider>
+    <RootSiblingParent>
+      <Provider store={store}>
+        <RootLayout />
+      </Provider>
+    </RootSiblingParent>
   )
 }
