@@ -6,6 +6,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import ProfileTabBarIcon from '@/components/ProfileTabBarIcon'
 import { useEffect } from 'react'
 import messaging from '@react-native-firebase/messaging'
+import { TAB_BAR_HEIGHT } from '@/constants/Dimensions'
 
 const TabLayout = () => {
   const colorScheme = useColorScheme()
@@ -32,7 +33,7 @@ const TabLayout = () => {
         tabBarStyle: {
           position: 'absolute',
           overflow: 'hidden',
-          height: 70
+          height: TAB_BAR_HEIGHT
         },
         tabBarBackground: () => <BlurView
           experimentalBlurMethod='dimezisBlurView'
