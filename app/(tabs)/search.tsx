@@ -1,5 +1,5 @@
 import { ActivityIndicator, FlatList, StyleSheet, useColorScheme } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import CustomTextInput from '@/components/CustomTextInput'
 import { InputState } from '@/types/types'
@@ -13,6 +13,8 @@ import { AxiosError } from 'axios'
 import UserFlatListItem from '@/components/UserFlatListItem'
 import UserListEmptyComponent from '@/components/UserListEmptyComponent'
 import { addRequest } from '@/api/requestApi'
+import showToast from '@/components/Toast'
+import { useIsFocused } from '@react-navigation/native'
 
 const Search = () => {
     const [search, setSearch] = useState<InputState>({
@@ -24,6 +26,7 @@ const Search = () => {
     const [hasMore, setHasMore] = useState(true)
     const [page, setPage] = useState(0)
 
+    const isFocused = useIsFocused()
     const headerHeight = useHeaderHeight()
     const colorScheme = useColorScheme()
 
@@ -61,6 +64,7 @@ const Search = () => {
 
             if (response.status === 201) {
                 setUsers(prev => prev.filter(user => user._id !== id))
+                showToast('Request has been sent')
             }
         } catch (e) {
             const err = e as AxiosError
@@ -77,7 +81,8 @@ const Search = () => {
         const limit = 10
 
         try {
-            if (search.value.length > 0) {
+            if (search.value.length > 0 && isFocused) {
+                
                 const response = await getUserByUsername(search.value, limit, 0)
                 const { users } = response.data
 
@@ -120,7 +125,7 @@ const Search = () => {
         }
     }
 
-    useDebounce(fetchUsersBasedOnSearchValue, [search.value], 800)
+    useDebounce(fetchUsersBasedOnSearchValue, [search.value, isFocused], 800)
 
     useEffect(() => {
         if (search.value.length === 0) {
@@ -154,6 +159,7 @@ const Search = () => {
                 ListFooterComponent={isLoading ? <ActivityIndicator size={'large'} /> : null}
                 ListEmptyComponent={<UserListEmptyComponent query={search.value} />}
                 contentContainerStyle={styles.flatListContainer}
+                keyboardDismissMode='on-drag'
             />
         </ThemedView>
     )
