@@ -19,21 +19,40 @@ function RootLayout() {
   const router = useRouter()
 
   const onAuthStateChanged = async (user: FirebaseAuthTypes.User | null): Promise<void> => {
-    const token = await user?.getIdToken()
-    const email = user?.email ?? ''
-
     if (user) {
+      const token = await user.getIdToken()
+      const email = user?.email ?? ''
       client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
       console.log('onAuthStateChanged', token);
       dispatch(getUserByEmailAsync({ email }))
+    } else {
+      client.defaults.headers.common['Authorization'] = undefined
     }
 
     if (isInitializing) setIsInitializing(false)
   }
 
+  const onIdTokenChanged = async (user: FirebaseAuthTypes.User | null): Promise<void> => {
+    if (user) {
+      const token = await user.getIdToken()
+      client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+      console.log('onIdTokenChanged', token);
+    } else {
+      client.defaults.headers.common['Authorization'] = undefined
+    }
+  }
+
   useEffect(() => {
     const sub = auth().onAuthStateChanged(onAuthStateChanged)
-    return sub
+    const tokenSub = auth().onIdTokenChanged(onIdTokenChanged)
+
+
+    return () => {
+      sub()
+      tokenSub()
+    }
   }, [])
 
   useEffect(() => {
