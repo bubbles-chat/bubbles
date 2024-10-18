@@ -17,3 +17,11 @@ export async function cancelRequest(id: string): Promise<AxiosResponse<{ message
 export async function getPendingRequests(): Promise<AxiosResponse<{ message: string, requests?: Request[] }>> {
     return await client.get('/request/getPendingRequests')
 }
+
+export async function rejectRequest(id: string): Promise<AxiosResponse<{ message: string, request?: Request }>> {
+    return await client.put(`/request/rejectRequest/${id}`)
+}
+
+export async function acceptRequest(id: string): Promise<AxiosResponse<{ message: string, request?: Request }>> {
+    return await client.put(`/request/acceptRequest/${id}`)
+}
