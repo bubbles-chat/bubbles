@@ -45,7 +45,7 @@ const PendingRequestFlatListItem = ({
                     {isLoading ?
                         <ActivityIndicator
                             size='large'
-                            style={styles.rejectBtn}
+                            style={styles.indicator}
                         />
                         :
                         <View style={styles.btnsView}>
@@ -96,5 +96,9 @@ const styles = StyleSheet.create({
     },
     acceptText: {
         color: 'green'
+    },
+    indicator: {
+        right: 8,
+        position: 'absolute'
     }
 })
