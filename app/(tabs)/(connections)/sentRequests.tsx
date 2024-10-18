@@ -51,7 +51,9 @@ const SentRequests = () => {
     }
 
     useEffect(() => {
-        fetchRequests()
+        if (isFocused) {
+            fetchRequests()
+        }
     }, [isFocused])
 
     return (
