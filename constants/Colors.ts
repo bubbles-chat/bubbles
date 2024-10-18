@@ -5,8 +5,8 @@
 
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
-const lightLinearGradient = ['#B2FEFA', '#0ED2F7']
-const darkLinearGradient = ['#09203F', '#537895']
+const lightLinearGradient = ['#6ECFFF', '#B084FF', '#FF99E5']
+const darkLinearGradient = ['#000', '#0695FF', '#A334FA']
 
 export const Colors = {
   light: {
@@ -21,7 +21,7 @@ export const Colors = {
   },
   dark: {
     text: '#ECEDEE',
-    background: '#09203F',
+    background: '#000',
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',

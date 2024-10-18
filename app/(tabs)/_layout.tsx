@@ -6,6 +6,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import ProfileTabBarIcon from '@/components/ProfileTabBarIcon'
 import { useEffect } from 'react'
 import messaging from '@react-native-firebase/messaging'
+import { TAB_BAR_HEIGHT } from '@/constants/Dimensions'
 
 const TabLayout = () => {
   const colorScheme = useColorScheme()
@@ -31,10 +32,8 @@ const TabLayout = () => {
         },
         tabBarStyle: {
           position: 'absolute',
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
           overflow: 'hidden',
-          height: 70
+          height: TAB_BAR_HEIGHT
         },
         tabBarBackground: () => <BlurView
           experimentalBlurMethod='dimezisBlurView'
@@ -61,7 +60,7 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
-        name='connections'
+        name='(connections)'
         options={{
           title: 'Connections',
           tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name='transit-connection-variant' color={color} size={size} />
