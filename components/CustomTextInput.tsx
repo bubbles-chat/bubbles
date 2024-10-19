@@ -1,7 +1,7 @@
 import { useThemeColor } from '@/hooks/useThemeColor'
 import { CustomTextInputProps } from '@/types/types'
 import React from 'react'
-import { StyleSheet, View, TextInput, Text } from 'react-native'
+import { StyleSheet, View, TextInput, Text, Pressable } from 'react-native'
 
 const CustomTextInput: React.FC<CustomTextInputProps> = (props) => {
     const borderColor = useThemeColor({ light: props.lightBorderColor, dark: props.darkBorderColor }, 'text') as string
@@ -23,6 +23,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = (props) => {
                     value={props.state.value}
                     placeholderTextColor={borderColor}
                 />
+                {props.pressableIcon ? <Pressable style={styles.pressable} onPress={props.pressableOnPress}>{props.pressableIcon}</Pressable> : null}
             </View>
             {(props.hasValidation && !props.state.validation?.isValid) && (
                 <Text style={styles.message}>{props.state.validation?.message}</Text>
@@ -48,5 +49,8 @@ const styles = StyleSheet.create({
     },
     message: {
         color: 'red'
+    },
+    pressable: {
+        padding: 8
     }
 })
