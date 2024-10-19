@@ -15,3 +15,7 @@ export async function getUserByEmail(email: string): Promise<AxiosResponse<{ mes
 export async function getUserByUsername(username: string, limit: number, skip: number): Promise<AxiosResponse<{ message: string, users: User[] }>> {
     return await client.get(`/user/getUserByUsername/${username}?limit=${limit}&skip=${skip}`)
 }
+
+export async function getUserById(id: string): Promise<AxiosResponse<{ message: string, user?: User }>> {
+    return await client.get(`/user/getUserById/${id}`)
+}
