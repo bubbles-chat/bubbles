@@ -1,5 +1,5 @@
 import { ReactNode } from "react"
-import { ModalProps, TextInputProps, TouchableOpacityProps, ViewProps } from "react-native"
+import { ModalProps, PressableProps, TextInputProps, TouchableOpacityProps, ViewProps } from "react-native"
 
 export interface CustomTextInputProps extends TextInputProps {
     Icon?: ReactNode
@@ -7,6 +7,8 @@ export interface CustomTextInputProps extends TextInputProps {
     state: InputState
     lightBorderColor?: string
     darkBorderColor?: string
+    pressableIcon?: ReactNode
+    pressableOnPress?: () => any
 }
 
 export interface Validation {
