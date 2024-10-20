@@ -16,6 +16,7 @@ import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { addUserAsync } from '@/store/userAsyncThunks'
 import client from '@/api/client'
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
+import socket from '@/api/socket'
 
 const SignUp = () => {
     const [email, setEmail] = useState<InputState>({
@@ -185,7 +186,11 @@ const SignUp = () => {
                 await auth().currentUser?.updateProfile({ displayName: username.value })
 
                 const token = await auth().currentUser?.getIdToken()
-                client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+                const authHeader = `Bearer ${token}`
+                client.defaults.headers.common['Authorization'] = authHeader
+                socket.auth = {
+                    token: authHeader
+                }
 
                 dispatch(addUserAsync({ email: email.value, displayName: username.value, photoURL: '' }))
             }
@@ -221,7 +226,11 @@ const SignUp = () => {
             const email = auth().currentUser?.email as string
             const displayName = auth().currentUser?.displayName as string
             const photoURL = auth().currentUser?.photoURL as string
-            client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+            const authHeader = `Bearer ${token}`
+            client.defaults.headers.common['Authorization'] = authHeader
+            socket.auth = {
+                token: authHeader
+            }
 
             dispatch(addUserAsync({ email, displayName, photoURL }))
         } catch (e) {
