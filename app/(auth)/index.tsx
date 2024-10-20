@@ -17,6 +17,7 @@ import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { getUserByEmailAsync } from "@/store/userAsyncThunks";
 import messaging from '@react-native-firebase/messaging'
 import { addToken } from "@/api/notificationTokenApi";
+import socket from "@/api/socket";
 
 GoogleSignin.configure({
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
@@ -106,7 +107,11 @@ export default function Index() {
         await auth().signInWithEmailAndPassword(email.value, password.value)
 
         const token = await auth().currentUser?.getIdToken()
-        client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        const authHeader = `Bearer ${token}`
+        client.defaults.headers.common['Authorization'] = authHeader
+        socket.auth = {
+          token: authHeader
+        }
 
         if (await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)) {
           await messaging().registerDeviceForRemoteMessages()
@@ -139,7 +144,11 @@ export default function Index() {
 
       const token = await auth().currentUser?.getIdToken()
       const email = auth().currentUser?.email as string
-      client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      const authHeader = `Bearer ${token}`
+      client.defaults.headers.common['Authorization'] = authHeader
+      socket.auth = {
+        token: authHeader
+      }
 
       if (await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)) {
         await messaging().registerDeviceForRemoteMessages()

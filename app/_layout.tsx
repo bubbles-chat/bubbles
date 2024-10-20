@@ -1,4 +1,5 @@
 import client from "@/api/client";
+import socket from "@/api/socket";
 import Loading from "@/components/Loading";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
@@ -22,7 +23,11 @@ function RootLayout() {
     if (user) {
       const token = await user.getIdToken()
       const email = user?.email ?? ''
-      client.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      const authHeader = `Bearer ${token}`
+      client.defaults.headers.common['Authorization'] = authHeader
+      socket.auth = {
+        token: authHeader
+      }
 
       console.log('onAuthStateChanged', token);
       dispatch(getUserByEmailAsync({ email }))
@@ -48,10 +53,12 @@ function RootLayout() {
     const sub = auth().onAuthStateChanged(onAuthStateChanged)
     const tokenSub = auth().onIdTokenChanged(onIdTokenChanged)
 
+    socket.connect()
 
     return () => {
       sub()
       tokenSub()
+      socket.disconnect()
     }
   }, [])
 
