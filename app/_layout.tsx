@@ -8,6 +8,7 @@ import { getUserByEmailAsync } from "@/store/userAsyncThunks";
 import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { RootSiblingParent } from "react-native-root-siblings";
 import { Provider } from "react-redux";
 
@@ -28,6 +29,8 @@ function RootLayout() {
       socket.auth = {
         token: authHeader
       }
+
+      socket.connect()
 
       console.log('onAuthStateChanged', token);
       dispatch(getUserByEmailAsync({ email }))
@@ -52,8 +55,6 @@ function RootLayout() {
   useEffect(() => {
     const sub = auth().onAuthStateChanged(onAuthStateChanged)
     const tokenSub = auth().onIdTokenChanged(onIdTokenChanged)
-
-    socket.connect()
 
     return () => {
       sub()
@@ -80,16 +81,19 @@ function RootLayout() {
     <Stack>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(chat)" options={{ headerShown: false }} />
     </Stack>
   );
 }
 
 export default function Layout() {
   return (
-    <RootSiblingParent>
-      <Provider store={store}>
-        <RootLayout />
-      </Provider>
-    </RootSiblingParent>
+    <KeyboardProvider>
+      <RootSiblingParent>
+        <Provider store={store}>
+          <RootLayout />
+        </Provider>
+      </RootSiblingParent>
+    </KeyboardProvider>
   )
 }
