@@ -12,12 +12,11 @@ import Loading from "@/components/Loading";
 import { validateEmail } from "@/utils/inputValidation";
 import auth from '@react-native-firebase/auth'
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import client from "@/api/client";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { getUserByEmailAsync } from "@/store/userAsyncThunks";
 import messaging from '@react-native-firebase/messaging'
 import { addToken } from "@/api/notificationTokenApi";
-import socket from "@/api/socket";
+import { updateAuthHeaders } from "@/utils/jwt";
 
 GoogleSignin.configure({
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
@@ -105,13 +104,7 @@ export default function Index() {
 
       if (emailValidationResult.isValid) {
         await auth().signInWithEmailAndPassword(email.value, password.value)
-
-        const token = await auth().currentUser?.getIdToken()
-        const authHeader = `Bearer ${token}`
-        client.defaults.headers.common['Authorization'] = authHeader
-        socket.auth = {
-          token: authHeader
-        }
+        await updateAuthHeaders()
 
         if (await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)) {
           await messaging().registerDeviceForRemoteMessages()
@@ -141,14 +134,9 @@ export default function Index() {
       const googleCredential = auth.GoogleAuthProvider.credential(data?.idToken as string | null)
 
       await auth().signInWithCredential(googleCredential)
+      await updateAuthHeaders()
 
-      const token = await auth().currentUser?.getIdToken()
       const email = auth().currentUser?.email as string
-      const authHeader = `Bearer ${token}`
-      client.defaults.headers.common['Authorization'] = authHeader
-      socket.auth = {
-        token: authHeader
-      }
 
       if (await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)) {
         await messaging().registerDeviceForRemoteMessages()

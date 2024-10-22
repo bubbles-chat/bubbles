@@ -5,6 +5,7 @@ import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { store } from "@/store/store";
 import { getUserByEmailAsync } from "@/store/userAsyncThunks";
+import { updateAuthHeaders } from "@/utils/jwt";
 import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -22,17 +23,11 @@ function RootLayout() {
 
   const onAuthStateChanged = async (user: FirebaseAuthTypes.User | null): Promise<void> => {
     if (user) {
-      const token = await user.getIdToken()
       const email = user?.email ?? ''
-      const authHeader = `Bearer ${token}`
-      client.defaults.headers.common['Authorization'] = authHeader
-      socket.auth = {
-        token: authHeader
-      }
+      await updateAuthHeaders()
 
       socket.connect()
 
-      console.log('onAuthStateChanged', token);
       dispatch(getUserByEmailAsync({ email }))
     } else {
       client.defaults.headers.common['Authorization'] = undefined
@@ -41,24 +36,11 @@ function RootLayout() {
     if (isInitializing) setIsInitializing(false)
   }
 
-  const onIdTokenChanged = async (user: FirebaseAuthTypes.User | null): Promise<void> => {
-    if (user) {
-      const token = await user.getIdToken()
-      client.defaults.headers.common['Authorization'] = `Bearer ${token}`
-
-      console.log('onIdTokenChanged', token);
-    } else {
-      client.defaults.headers.common['Authorization'] = undefined
-    }
-  }
-
   useEffect(() => {
     const sub = auth().onAuthStateChanged(onAuthStateChanged)
-    const tokenSub = auth().onIdTokenChanged(onIdTokenChanged)
 
     return () => {
       sub()
-      tokenSub()
       socket.disconnect()
     }
   }, [])

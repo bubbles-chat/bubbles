@@ -14,9 +14,8 @@ import auth from '@react-native-firebase/auth'
 import Loading from '@/components/Loading'
 import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { addUserAsync } from '@/store/userAsyncThunks'
-import client from '@/api/client'
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
-import socket from '@/api/socket'
+import { updateAuthHeaders } from '@/utils/jwt'
 
 const SignUp = () => {
     const [email, setEmail] = useState<InputState>({
@@ -184,13 +183,7 @@ const SignUp = () => {
             ) {
                 await auth().createUserWithEmailAndPassword(email.value, password.value)
                 await auth().currentUser?.updateProfile({ displayName: username.value })
-
-                const token = await auth().currentUser?.getIdToken()
-                const authHeader = `Bearer ${token}`
-                client.defaults.headers.common['Authorization'] = authHeader
-                socket.auth = {
-                    token: authHeader
-                }
+                await updateAuthHeaders()
 
                 dispatch(addUserAsync({ email: email.value, displayName: username.value, photoURL: '' }))
             }
@@ -221,16 +214,11 @@ const SignUp = () => {
             const googleCredential = auth.GoogleAuthProvider.credential(data?.idToken as string | null)
 
             await auth().signInWithCredential(googleCredential)
+            await updateAuthHeaders()
 
-            const token = await auth().currentUser?.getIdToken()
             const email = auth().currentUser?.email as string
             const displayName = auth().currentUser?.displayName as string
             const photoURL = auth().currentUser?.photoURL as string
-            const authHeader = `Bearer ${token}`
-            client.defaults.headers.common['Authorization'] = authHeader
-            socket.auth = {
-                token: authHeader
-            }
 
             dispatch(addUserAsync({ email, displayName, photoURL }))
         } catch (e) {
