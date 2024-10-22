@@ -6,5 +6,5 @@ export default interface Chat {
     participants: User[] | string[]
     lastMessage: Message | string
     type: string
-    chatName: string
+    chatName?: string
 }
