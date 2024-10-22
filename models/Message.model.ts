@@ -7,4 +7,6 @@ export default interface Message {
     sender: User | string
     text: string
     attachmentsUrl: string[]
+    createdAt: Date
+    updatedAt: Date
 }
