@@ -17,7 +17,7 @@ import { AxiosError } from 'axios'
 import { getMessages } from '@/api/messageApi'
 
 const Chat = () => {
-    const limit = 10
+    const limit = 20
     const { id, type, chatName, photoUrl } = useLocalSearchParams()
     const { user } = useAppSelector(state => state.user)
 
@@ -150,7 +150,11 @@ const Chat = () => {
                     </> : <View style={{ height: headerHeight }} />}
                 inverted
                 contentContainerStyle={styles.flatListContainer}
-                onEndReached={fetchMessagesOnEndReached}
+                onEndReached={async () => {
+                    if (!isLoading) {
+                        await fetchMessagesOnEndReached()
+                    }
+                }}
                 onEndReachedThreshold={0.5}
                 onScroll={handleOnScroll}
             />
