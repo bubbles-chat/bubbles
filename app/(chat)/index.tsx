@@ -1,12 +1,12 @@
-import { ActivityIndicator, FlatList, Image, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
+import { ActivityIndicator, FlatList, Image, NativeScrollEvent, NativeSyntheticEvent, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '@/components/ThemedText'
 import { Colors } from '@/constants/Colors'
-import { Ionicons } from '@expo/vector-icons'
-import Animated, { useAnimatedStyle } from 'react-native-reanimated'
+import { Feather, Ionicons } from '@expo/vector-icons'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import useGradualAnimation from '@/hooks/useGradualAnimation'
 import { PADDING_BOTTOM } from '@/constants/Dimensions'
 import Message from '@/models/Message.model'
@@ -20,6 +20,7 @@ const Chat = () => {
     const limit = 10
     const { id, type, chatName, photoUrl } = useLocalSearchParams()
     const { user } = useAppSelector(state => state.user)
+
     const [messages, setMessages] = useState<Message[]>([])
     const [message, setMessage] = useState({
         text: ''
@@ -27,18 +28,31 @@ const Chat = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [page, setPage] = useState(0)
     const [hasMore, setHasMore] = useState(true)
+    const [isNearBottom, setIsNearBottom] = useState(true)
+
     const navigation = useNavigation()
     const headerHeight = useHeaderHeight()
     const colorScheme = useColorScheme()
     const { height } = useGradualAnimation()
+    const scrollToBottomOpacity = useSharedValue(0)
+
     const flatListRef = useRef<FlatList>(null)
+
     const fakeView = useAnimatedStyle(() => {
         return {
             height: Math.abs(height.value),
             marginBottom: height.value > 0 ? 0 : PADDING_BOTTOM
         }
     })
+    const scollToBottomBtn = useAnimatedStyle(() => {
+        return {
+            bottom: Math.abs(height.value) + 70,
+            opacity: scrollToBottomOpacity.value
+        }
+    })
+
     const textColor = colorScheme === 'dark' ? Colors.dark.text : Colors.light.text
+    const bubbleBackground = colorScheme === 'dark' ? '#343434' : '#d3d3d3'
 
     const handleOnChangeText = (text: string) => {
         setMessage(prev => ({
@@ -58,6 +72,15 @@ const Chat = () => {
             socket.emit('chat:newMessage', payload)
             setMessage({ text: '' })
         }
+    }
+
+    const handleOnPressScrollToBottom = () => {
+        flatListRef.current?.scrollToIndex({ animated: true, index: 0 })
+    }
+
+    const handleOnScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const yOffset = event.nativeEvent.contentOffset.y
+        setIsNearBottom(yOffset < 50)
     }
 
     const fetchMessagesOnEndReached = async () => {
@@ -110,6 +133,10 @@ const Chat = () => {
         }
     }, [])
 
+    useEffect(() => {
+        scrollToBottomOpacity.value = withTiming(isNearBottom ? 0 : 1, { duration: 300 })
+    }, [isNearBottom])
+
     return (
         <ThemedView style={styles.container}>
             <FlatList
@@ -125,7 +152,17 @@ const Chat = () => {
                 contentContainerStyle={styles.flatListContainer}
                 onEndReached={fetchMessagesOnEndReached}
                 onEndReachedThreshold={0.5}
+                onScroll={handleOnScroll}
             />
+            <Animated.View style={[styles.scrollToBottomBtnView, scollToBottomBtn, { backgroundColor: bubbleBackground }]}>
+                <TouchableOpacity style={styles.scrollToBottomBtn} onPress={handleOnPressScrollToBottom}>
+                    <Feather
+                        name='chevron-down'
+                        size={18}
+                        color={textColor}
+                    />
+                </TouchableOpacity>
+            </Animated.View>
             <View style={[styles.inputView, { borderColor: textColor, }]}>
                 <TextInput
                     value={message.text}
@@ -181,5 +218,14 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         marginTop: 8,
         gap: 8
+    },
+    scrollToBottomBtnView: {
+        position: 'absolute',
+        right: 8,
+        borderRadius: 10,
+        elevation: 4
+    },
+    scrollToBottomBtn: {
+        padding: 8
     }
 })
