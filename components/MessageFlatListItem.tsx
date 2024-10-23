@@ -15,9 +15,10 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
     const previousWeek = new Date(today);
     previousWeek.setDate(today.getDate() - 7);
     previousWeek.setHours(0, 0, 0)
-    const sentAt = compareDates(item.createdAt, previousWeek) < 0 ?
-        `${item.createdAt.toLocaleDateString()} ${item.createdAt.toLocaleTimeString()}` : compareDates(item.createdAt, today) < 0 ?
-            `${getDayName(item.createdAt.getDay())} ${item.createdAt.toLocaleTimeString()}` : item.createdAt.toLocaleTimeString()
+    const sentAt = new Date(item.createdAt as string)
+    const sentAtText = compareDates(sentAt, previousWeek) < 0 ?
+        `${sentAt.toLocaleDateString()} ${sentAt.toLocaleTimeString()}` : compareDates(sentAt, today) < 0 ?
+            `${getDayName(sentAt.getDay())} ${sentAt.toLocaleTimeString()}` : sentAt.toLocaleTimeString()
     const parse: ParseShape[] = [
         {
             type: 'url',
@@ -52,21 +53,21 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
                 >
                     {item.text}
                 </ParsedText>
-                <Text style={[styles.timeText, { color: tint }]}>{sentAt}</Text>
+                <Text style={[styles.timeText, { color: tint }]}>{sentAtText}</Text>
             </LinearGradient>
         )
     } else {
         const bubbleBackground = colorScheme === 'dark' ? '#343434' : '#d3d3d3'
 
         return (
-            <View style={[styles.container, { backgroundColor: bubbleBackground }]}>
+            <View style={[styles.container, { backgroundColor: bubbleBackground, alignSelf: 'flex-start' }]}>
                 <ParsedText
                     style={{ color: textColor }}
                     parse={parse}
                 >
                     {item.text}
                 </ParsedText>
-                <Text style={[styles.timeText, { color: tint }]}>{sentAt}</Text>
+                <Text style={[styles.timeText, { color: tint }]}>{sentAtText}</Text>
             </View>
         )
     }
@@ -76,7 +77,7 @@ export default MessageFlatListItem
 
 const styles = StyleSheet.create({
     container: {
-        maxWidth: '75%',
+        maxWidth: '70%',
         padding: 8,
         borderRadius: 10
     },
