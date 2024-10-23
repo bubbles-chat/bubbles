@@ -56,14 +56,14 @@ const Home = () => {
   }
 
   useEffect(() => {
-    const requestNotificationPermission = async () => {
-      if (!permission?.granted && permission?.canAskAgain) {
+    const requestNotificationPermission = async () => {      
+      if (permission && !permission?.granted && permission?.canAskAgain) {        
         setModalVisible(true)
       }
     }
 
     requestNotificationPermission()
-  }, [])
+  }, [permission])
 
   return (
     <ThemedView style={[styles.contianer]}>
