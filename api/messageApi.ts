@@ -7,3 +7,8 @@ export async function getMessages(chatId: string, limit: number, skip: number): 
     await updateAuthHeaders()
     return await client.get(`/message/getMessages/${chatId}?limit=${limit}&skip=${skip}`)
 }
+
+export async function getMessage(id: string): Promise<AxiosResponse<{ message: Message }>> {
+    await updateAuthHeaders()
+    return await client.get(`/message/getMessage/${id}`)
+}
