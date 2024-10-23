@@ -1,4 +1,4 @@
-import { FlatList, Image, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
+import { ActivityIndicator, FlatList, Image, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
@@ -12,14 +12,21 @@ import { PADDING_BOTTOM } from '@/constants/Dimensions'
 import Message from '@/models/Message.model'
 import { useAppSelector } from '@/hooks/useAppSelector'
 import MessageFlatListItem from '@/components/MessageFlatListItem'
+import socket from '@/api/socket'
+import { AxiosError } from 'axios'
+import { getMessages } from '@/api/messageApi'
 
 const Chat = () => {
+    const limit = 10
     const { id, type, chatName, photoUrl } = useLocalSearchParams()
     const { user } = useAppSelector(state => state.user)
     const [messages, setMessages] = useState<Message[]>([])
     const [message, setMessage] = useState({
         text: ''
     })
+    const [isLoading, setIsLoading] = useState(false)
+    const [page, setPage] = useState(0)
+    const [hasMore, setHasMore] = useState(true)
     const navigation = useNavigation()
     const headerHeight = useHeaderHeight()
     const colorScheme = useColorScheme()
@@ -40,6 +47,47 @@ const Chat = () => {
         }))
     }
 
+    const handleOnPressSend = () => {
+        if (message.text.length > 0) {
+            const payload: Message = {
+                chatId: id as string,
+                sender: user?._id as string,
+                attachmentsUrl: [],
+                text: message.text
+            }
+            socket.emit('chat:newMessage', payload)
+            setMessage({ text: '' })
+        }
+    }
+
+    const fetchMessagesOnEndReached = async () => {
+        setIsLoading(true)
+
+        const skip = page * limit
+
+        try {
+            if (hasMore) {
+                const response = await getMessages(id as string, limit, skip)
+
+                if (response.status === 200) {
+                    const { messages } = response.data
+
+                    if (messages.length < limit) {
+                        setHasMore(false)
+                    }
+
+                    setMessages(prev => [...prev, ...messages])
+                    setPage(prev => prev + 1)
+                }
+            }
+        } catch (e) {
+            const err = e as AxiosError
+            console.error(err)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     useEffect(() => {
         navigation.setOptions({
             headerTitle: () => <>
@@ -48,9 +96,18 @@ const Chat = () => {
                     style={styles.image}
                 />
                 <ThemedText>{chatName}</ThemedText>
-            </>,
-
+            </>
         })
+
+        socket.emit('chat:joinRoom', id)
+        socket.on('chat:messageAdded', (payload) => {
+            setMessages(prev => [payload, ...prev])
+        })
+
+        return () => {
+            socket.emit('chat:leaveRoom', id)
+            socket.off('chat:messageAdded')
+        }
     }, [])
 
     return (
@@ -59,10 +116,15 @@ const Chat = () => {
                 ref={flatListRef}
                 data={messages}
                 renderItem={({ item }) => <MessageFlatListItem item={item} />}
-                ListFooterComponent={<View style={{ height: headerHeight }} />}
-                keyboardDismissMode='on-drag'
+                ListFooterComponent={isLoading ?
+                    <>
+                        <View style={{ height: headerHeight }} />
+                        <ActivityIndicator size='large' />
+                    </> : <View style={{ height: headerHeight }} />}
                 inverted
                 contentContainerStyle={styles.flatListContainer}
+                onEndReached={fetchMessagesOnEndReached}
+                onEndReachedThreshold={0.5}
             />
             <View style={[styles.inputView, { borderColor: textColor, }]}>
                 <TextInput
@@ -74,7 +136,7 @@ const Chat = () => {
                     keyboardType='default'
                     multiline
                 />
-                <TouchableOpacity style={styles.sendBtn} onPress={() => flatListRef.current?.scrollToEnd({ animated: true })}>
+                <TouchableOpacity style={styles.sendBtn} onPress={handleOnPressSend}>
                     <Ionicons
                         name='send'
                         color={textColor}
