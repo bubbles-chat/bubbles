@@ -89,15 +89,9 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
                 />
                 <View>
                     <ThemedText>{otherUser?.displayName}</ThemedText>
-                    <Text style={{ color: textColor }}>{lastMessage}</Text>
+                    <Text style={{ color: textColor }} numberOfLines={1}>{lastMessage}</Text>
                 </View>
-                {counter > 0 && <View style={{
-                    padding: 4,
-                    position: 'absolute',
-                    backgroundColor: tintColor,
-                    right: 8,
-                    borderRadius: 16
-                }}>
+                {counter > 0 && <View style={[styles.counterView, { backgroundColor: tintColor }]}>
                     <Text style={{ color: colorScheme === 'dark' ? '#000' : '#fff' }}>{counter}</Text>
                 </View>}
             </Pressable>
@@ -127,5 +121,11 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         marginRight: 8,
         backgroundColor: 'lightgrey'
+    },
+    counterView: {
+        padding: 4,
+        position: 'absolute',
+        right: 8,
+        borderRadius: 16
     }
 })
