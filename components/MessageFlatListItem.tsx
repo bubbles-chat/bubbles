@@ -1,4 +1,4 @@
-import { Linking, StyleSheet, Text, useColorScheme, View } from 'react-native'
+import { Linking, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native'
 import Message from '@/models/Message.model'
 import { useAppSelector } from '@/hooks/useAppSelector'
 import ParsedText, { ParseShape } from 'react-native-parsed-text'
@@ -6,16 +6,26 @@ import { Colors } from '@/constants/Colors'
 import { LinearGradient } from 'expo-linear-gradient'
 import { compareDates, getDayName } from '@/utils/date'
 import showToast from './Toast'
+import socket from '@/api/socket'
+import { useState } from 'react'
+import CustomModal from './CustomModal'
+import { ThemedText } from './ThemedText'
+import CustomButton from './CustomButton'
 
 const MessageFlatListItem = ({ item }: { item: Message }) => {
     const { user } = useAppSelector(state => state.user)
     const colorScheme = useColorScheme()
+
+    const [modalVisible, setModalVisible] = useState(false)
+
     const textColor = colorScheme === 'dark' ? Colors.dark.text : Colors.light.text
     const tint = colorScheme === 'dark' ? Colors.dark.icon : Colors.light.icon
+
     const today = new Date(); today.setHours(0, 0, 0)
     const previousWeek = new Date(today);
     previousWeek.setDate(today.getDate() - 7);
     previousWeek.setHours(0, 0, 0)
+
     const sentAt = new Date(item.createdAt as string)
     const sentAtText = compareDates(sentAt, previousWeek) < 0 ?
         `${sentAt.toLocaleDateString()} ${sentAt.toLocaleTimeString()}` : compareDates(sentAt, today) < 0 ?
@@ -56,6 +66,19 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
         }
     }
 
+    const handleUserMessageOnLongPress = () => {
+        setModalVisible(true)
+    }
+
+    const onRequestClose = () => {
+        setModalVisible(false)
+    }
+
+    const handleOnPressYes = () => {
+        socket.emit('chat:deleteMessage', item._id)
+        setModalVisible(false)
+    }
+
     const parse: ParseShape[] = [
         {
             type: 'url',
@@ -78,20 +101,39 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
         const gradient = colorScheme === 'dark' ? Colors.dark.gradient.filter(color => color !== '#000') : Colors.light.gradient
 
         return (
-            <LinearGradient
-                style={[styles.container, { alignSelf: 'flex-end' }]}
-                colors={gradient}
-                start={{ x: 0, y: 1 }}
-                end={{ x: 1, y: 0 }}
-            >
-                <ParsedText
-                    style={{ color: textColor }}
-                    parse={parse}
+            <Pressable style={styles.pressable} onLongPress={handleUserMessageOnLongPress}>
+                <CustomModal visible={modalVisible} onRequestClose={onRequestClose}>
+                    <ThemedText style={{ fontWeight: 'bold' }}>Would you like to delete the following message?</ThemedText>
+                    <View style={styles.separator} />
+                    <ThemedText numberOfLines={3}>{item.text}</ThemedText>
+                    <View style={styles.separator} />
+                    <View style={styles.btnsView}>
+                        <CustomButton
+                            text='No'
+                            hasBackground={false}
+                            onPress={onRequestClose}
+                        />
+                        <CustomButton
+                            text='Yes'
+                            onPress={handleOnPressYes}
+                        />
+                    </View>
+                </CustomModal>
+                <LinearGradient
+                    style={styles.container}
+                    colors={gradient}
+                    start={{ x: 0, y: 1 }}
+                    end={{ x: 1, y: 0 }}
                 >
-                    {item.text}
-                </ParsedText>
-                <Text style={[styles.timeText, { color: tint }]}>{sentAtText}</Text>
-            </LinearGradient>
+                    <ParsedText
+                        style={{ color: textColor }}
+                        parse={parse}
+                    >
+                        {item.text}
+                    </ParsedText>
+                    <Text style={[styles.timeText, { color: tint }]}>{sentAtText}</Text>
+                </LinearGradient>
+            </Pressable>
         )
     } else {
         const bubbleBackground = colorScheme === 'dark' ? '#343434' : '#d3d3d3'
@@ -123,5 +165,16 @@ const styles = StyleSheet.create({
     },
     timeText: {
         textAlign: 'right'
+    },
+    pressable: {
+        alignSelf: 'flex-end'
+    },
+    separator: {
+        height: 8
+    },
+    btnsView: {
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'space-between'
     }
 })
