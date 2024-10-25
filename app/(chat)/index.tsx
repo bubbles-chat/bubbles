@@ -81,7 +81,7 @@ const Chat = () => {
 
     const handleOnScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const yOffset = event.nativeEvent.contentOffset.y
-        setIsNearBottom(yOffset < 50)
+        setIsNearBottom(yOffset < 200)
     }
 
     const fetchMessagesOnEndReached = async () => {
