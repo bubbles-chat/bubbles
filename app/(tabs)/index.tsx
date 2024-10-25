@@ -1,5 +1,5 @@
-import { PermissionsAndroid, Platform, StyleSheet, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import { FlatList, Platform, StyleSheet, View } from 'react-native'
+import { useEffect, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '@/components/ThemedText'
@@ -9,10 +9,20 @@ import { AxiosError } from 'axios'
 import messaging from '@react-native-firebase/messaging'
 import { addToken } from '@/api/notificationTokenApi'
 import * as Notification from 'expo-notifications'
+import { useAppSelector } from '@/hooks/useAppSelector'
+import Chat from '@/models/Chat.model'
+import ChatListEmptyComponent from '@/components/ChatListEmptyComponent'
+import ChatFlatListItem from '@/components/ChatFlatListItem'
 
 const Home = () => {
+  const { user } = useAppSelector(state => state.user)
   const [modalVisible, setModalVisible] = useState(false)
+  const [permission, requestPermission] = Notification.usePermissions()
   const headerHeight = useHeaderHeight()
+
+  const isChatsIsChatsArray = (chats: Chat[] | string[]): chats is Chat[] => {
+    return chats.length > 0 && typeof chats[0] !== 'string'
+  }
 
   const handleDeclineOnPress = () => {
     setModalVisible(false)
@@ -20,9 +30,9 @@ const Home = () => {
 
   const handleAcceptOnPress = async () => {
     try {
-      const requestResult = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
+      const requestResult = await requestPermission()
 
-      if (requestResult === 'granted') {
+      if (requestResult.granted) {
         if (Platform.OS === 'android') {
           await Notification.setNotificationChannelAsync('default', {
             name: 'default',
@@ -31,7 +41,7 @@ const Home = () => {
         }
 
         await messaging().registerDeviceForRemoteMessages()
-        
+
         const token = await messaging().getToken()
         console.log('notification token:', token);
 
@@ -46,19 +56,17 @@ const Home = () => {
   }
 
   useEffect(() => {
-    const requestNotificationPermission = async () => {
-      const res = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
-
-      if (!res) {
+    const requestNotificationPermission = async () => {      
+      if (permission && !permission?.granted && permission?.canAskAgain) {        
         setModalVisible(true)
       }
     }
 
     requestNotificationPermission()
-  }, [])
+  }, [permission])
 
   return (
-    <ThemedView style={[styles.contianer, { paddingTop: headerHeight + 16 }]}>
+    <ThemedView style={[styles.contianer]}>
       <CustomModal visible={modalVisible}>
         <ThemedText style={styles.modalTitle}>Notification Permission required</ThemedText>
         <View style={{ height: 16 }} />
@@ -78,10 +86,14 @@ const Home = () => {
           />
         </View>
       </CustomModal>
-      <ThemedText>Home</ThemedText>
-      {/* <CustomModal visible={true} /> */}
-      {/* <Button title='sign out' onPress={handleSignOutOnPress} /> */}
-      {/* <View style={{ width: 30, height: 30, bottom: 0, backgroundColor: 'red', position: 'absolute' }} /> */}
+      {(user && isChatsIsChatsArray(user.chats)) && <FlatList
+        data={user.chats}
+        renderItem={({ item }) => <ChatFlatListItem item={item} />}
+        keyExtractor={(item) => item._id}
+        contentContainerStyle={styles.flatListContainer}
+        ListEmptyComponent={<ChatListEmptyComponent />}
+        ListHeaderComponent={<View style={{ height: headerHeight }} />}
+      />}
     </ThemedView>
   )
 }
@@ -91,12 +103,14 @@ export default Home
 const styles = StyleSheet.create({
   contianer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
+    paddingHorizontal: 8
   },
   modalTitle: {
     fontWeight: 'bold',
     fontSize: 20,
     alignSelf: 'flex-start'
+  },
+  flatListContainer: {
+    flexGrow: 1
   }
 })
