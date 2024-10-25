@@ -9,12 +9,16 @@ import { ThemedText } from './ThemedText'
 import { Colors } from '@/constants/Colors'
 import { router } from 'expo-router'
 import { getMessage } from '@/api/messageApi'
+import socket from '@/api/socket'
+import Message from '@/models/Message.model'
 
 const ChatFlatListItem = ({ item }: { item: Chat }) => {
     const { user } = useAppSelector(state => state.user)
     const [lastMessage, setLastMessage] = useState('')
+    const [counter, setCounter] = useState(0)
     const colorScheme = useColorScheme()
     const textColor = colorScheme === 'dark' ? Colors.dark.icon : Colors.light.icon
+    const tintColor = colorScheme === 'dark' ? Colors.dark.tabIconSelected : Colors.light.tabIconSelected
 
     if (item.type === 'single') {
         const [otherUser, setOtherUser] = useState<User | undefined>(undefined)
@@ -51,18 +55,34 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
         useEffect(() => {
             fetchOtherUser()
             fetchLastMessage()
+
+            socket.emit('chat:joinRoom', item._id)
+            socket.on('chat:messageAdded', (payload: { chatId: string, message: Message }) => {
+                if (payload.chatId === item._id) {
+                    setLastMessage(payload.message.text)
+                    setCounter(prev => prev + 1)
+                }
+            })
+
+            return () => {
+                socket.emit('chat:leaveRoom', item._id)
+                socket.off('chat:messageAdded')
+            }
         }, [])
 
         return (
-            <Pressable style={styles.container} onPress={() => router.push({
-                pathname: '/(chat)',
-                params: {
-                    id: item._id,
-                    type: item.type,
-                    chatName: otherUser?.displayName,
-                    photoUrl: otherUser?.photoURL
-                }
-            })}>
+            <Pressable style={styles.container} onPress={() => {
+                router.push({
+                    pathname: '/(chat)',
+                    params: {
+                        id: item._id,
+                        type: item.type,
+                        chatName: otherUser?.displayName,
+                        photoUrl: otherUser?.photoURL
+                    }
+                })
+                setCounter(0)
+            }}>
                 <Image
                     source={otherUser?.photoURL.length === 0 ? require('@/assets/images/avatar.png') : { uri: otherUser?.photoURL }}
                     style={styles.image}
@@ -71,6 +91,15 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
                     <ThemedText>{otherUser?.displayName}</ThemedText>
                     <Text style={{ color: textColor }}>{lastMessage}</Text>
                 </View>
+                {counter > 0 && <View style={{
+                    padding: 4,
+                    position: 'absolute',
+                    backgroundColor: tintColor,
+                    right: 8,
+                    borderRadius: 16
+                }}>
+                    <Text style={{ color: colorScheme === 'dark' ? '#000' : '#fff' }}>{counter}</Text>
+                </View>}
             </Pressable>
         )
     } else {
