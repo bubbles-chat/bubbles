@@ -123,8 +123,10 @@ const Chat = () => {
         })
 
         socket.emit('chat:joinRoom', id)
-        socket.on('chat:messageAdded', (payload) => {
-            setMessages(prev => [payload, ...prev])
+        socket.on('chat:messageAdded', (payload: { chatId: string, message: Message }) => {
+            if (payload.chatId === id) {
+                setMessages(prev => [payload.message, ...prev])
+            }
         })
 
         return () => {
