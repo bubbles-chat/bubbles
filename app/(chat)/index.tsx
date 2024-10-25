@@ -29,6 +29,7 @@ const Chat = () => {
     const [page, setPage] = useState(0)
     const [hasMore, setHasMore] = useState(true)
     const [isNearBottom, setIsNearBottom] = useState(true)
+    const [counter, setCounter] = useState(0)
 
     const navigation = useNavigation()
     const headerHeight = useHeaderHeight()
@@ -86,7 +87,7 @@ const Chat = () => {
     const fetchMessagesOnEndReached = async () => {
         setIsLoading(true)
 
-        const skip = page * limit
+        const skip = page * limit + counter
 
         try {
             if (hasMore) {
@@ -126,6 +127,7 @@ const Chat = () => {
         socket.on('chat:messageAdded', (payload: { chatId: string, message: Message }) => {
             if (payload.chatId === id) {
                 setMessages(prev => [payload.message, ...prev])
+                setCounter(prev => prev + 1)
             }
         })
 
