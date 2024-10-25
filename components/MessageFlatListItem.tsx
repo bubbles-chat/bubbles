@@ -11,12 +11,21 @@ import { useState } from 'react'
 import CustomModal from './CustomModal'
 import { ThemedText } from './ThemedText'
 import CustomButton from './CustomButton'
+import { MaterialIcons } from '@expo/vector-icons'
+import CustomTextInput from './CustomTextInput'
+import { InputState } from '@/types/types'
 
 const MessageFlatListItem = ({ item }: { item: Message }) => {
     const { user } = useAppSelector(state => state.user)
     const colorScheme = useColorScheme()
 
-    const [modalVisible, setModalVisible] = useState(false)
+    const [confirmDeleteModalVisible, setConfirmDeleteModalVisible] = useState(false)
+    const [optionsModalVisible, setOptionsModalVisible] = useState(false)
+    const [editModalVisible, setEditModalVisible] = useState(false)
+    const [edited, setEdited] = useState<InputState>({
+        value: item.text,
+        isFocused: false
+    })
 
     const textColor = colorScheme === 'dark' ? Colors.dark.text : Colors.light.text
     const tint = colorScheme === 'dark' ? Colors.dark.icon : Colors.light.icon
@@ -67,16 +76,46 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
     }
 
     const handleUserMessageOnLongPress = () => {
-        setModalVisible(true)
+        setOptionsModalVisible(true)
     }
 
-    const onRequestClose = () => {
-        setModalVisible(false)
+    const onRequestCloseOptionsModal = () => {
+        setOptionsModalVisible(false)
+    }
+
+    const handleOnPressEdit = () => {
+        setOptionsModalVisible(false)
+        setEditModalVisible(true)
+    }
+
+    const handleOnPressDelete = () => {
+        setOptionsModalVisible(false)
+        setConfirmDeleteModalVisible(true)
+    }
+
+    const onRequestCloseEditModal = () => {
+        setEditModalVisible(false)
+    }
+
+    const onRequestCloseConfirmDeleteModal = () => {
+        setConfirmDeleteModalVisible(false)
     }
 
     const handleOnPressYes = () => {
         socket.emit('chat:deleteMessage', item._id)
-        setModalVisible(false)
+        setConfirmDeleteModalVisible(false)
+    }
+
+    const handleOnChangeText = (text: string) => {
+        setEdited(prev => ({
+            ...prev,
+            value: text
+        }))
+    }
+
+    const handleOnPressSave = () => {
+        socket.emit('chat:editMessage', { text: edited.value, id: item._id })
+        setEditModalVisible(false)
     }
 
     const parse: ParseShape[] = [
@@ -102,8 +141,59 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
 
         return (
             <Pressable style={styles.pressable} onLongPress={handleUserMessageOnLongPress}>
-                <CustomModal visible={modalVisible} onRequestClose={onRequestClose}>
-                    <ThemedText style={{ fontWeight: 'bold' }}>Would you like to delete the following message?</ThemedText>
+                {/* options modal */}
+                <CustomModal visible={optionsModalVisible} onRequestClose={onRequestCloseOptionsModal}>
+                    <ThemedText style={styles.modalTitle}>Choose action:</ThemedText>
+                    <View style={styles.separator} />
+                    <Pressable style={styles.optionBtn} onPress={handleOnPressEdit}>
+                        <MaterialIcons
+                            name='edit'
+                            size={18}
+                            color={textColor}
+                        />
+                        <ThemedText>Edit message</ThemedText>
+                    </Pressable>
+                    <View style={styles.separator} />
+                    <Pressable style={styles.optionBtn} onPress={handleOnPressDelete}>
+                        <MaterialIcons
+                            name='delete'
+                            size={18}
+                            color={textColor}
+                        />
+                        <ThemedText>Delete message</ThemedText>
+                    </Pressable>
+                    <View style={styles.separator} />
+                </CustomModal>
+                {/* edit modal */}
+                <CustomModal visible={editModalVisible} onRequestClose={onRequestCloseEditModal}>
+                    <ThemedText style={styles.modalTitle}>Edit your message</ThemedText>
+                    <View style={styles.separator} />
+                    <CustomTextInput
+                        state={edited}
+                        Icon={<MaterialIcons
+                            name='edit'
+                            size={18}
+                            color={textColor}
+                        />}
+                        placeholder='Enter the edited message'
+                        onChangeText={handleOnChangeText}
+                    />
+                    <View style={styles.separator} />
+                    <View style={styles.btnsView}>
+                        <CustomButton
+                            text='Cancel'
+                            hasBackground={false}
+                            onPress={onRequestCloseEditModal}
+                        />
+                        <CustomButton
+                            text='Save'
+                            onPress={handleOnPressSave}
+                        />
+                    </View>
+                </CustomModal>
+                {/* confirm delete modal */}
+                <CustomModal visible={confirmDeleteModalVisible} onRequestClose={onRequestCloseConfirmDeleteModal}>
+                    <ThemedText style={styles.modalTitle}>Would you like to delete the following message?</ThemedText>
                     <View style={styles.separator} />
                     <ThemedText numberOfLines={3}>{item.text}</ThemedText>
                     <View style={styles.separator} />
@@ -111,7 +201,7 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
                         <CustomButton
                             text='No'
                             hasBackground={false}
-                            onPress={onRequestClose}
+                            onPress={onRequestCloseConfirmDeleteModal}
                         />
                         <CustomButton
                             text='Yes'
@@ -176,5 +266,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         width: '100%',
         justifyContent: 'space-between'
+    },
+    modalTitle: {
+        fontWeight: 'bold'
+    },
+    optionBtn: {
+        padding: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        alignSelf: 'flex-start'
     }
 })
