@@ -1,10 +1,11 @@
-import { StyleSheet, Text, useColorScheme, View } from 'react-native'
+import { Linking, StyleSheet, Text, useColorScheme, View } from 'react-native'
 import Message from '@/models/Message.model'
 import { useAppSelector } from '@/hooks/useAppSelector'
 import ParsedText, { ParseShape } from 'react-native-parsed-text'
 import { Colors } from '@/constants/Colors'
 import { LinearGradient } from 'expo-linear-gradient'
 import { compareDates, getDayName } from '@/utils/date'
+import showToast from './Toast'
 
 const MessageFlatListItem = ({ item }: { item: Message }) => {
     const { user } = useAppSelector(state => state.user)
@@ -19,21 +20,57 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
     const sentAtText = compareDates(sentAt, previousWeek) < 0 ?
         `${sentAt.toLocaleDateString()} ${sentAt.toLocaleTimeString()}` : compareDates(sentAt, today) < 0 ?
             `${getDayName(sentAt.getDay())} ${sentAt.toLocaleTimeString()}` : sentAt.toLocaleTimeString()
+
+    const handleUrlOnPress = async (url: string) => {
+        try {
+            if (await Linking.canOpenURL(url)) {
+                await Linking.openURL(url)
+            } else {
+                showToast("Can't open url")
+            }
+        } catch (error) {
+            console.log('MessageFlatListItem:URL', error);
+        }
+    }
+
+    const handlePhoneNumberOnPress = async (phoneNumber: string) => {
+        try {
+            const url = `tel:${phoneNumber}`
+            if (await Linking.canOpenURL(url)) {
+                await Linking.openURL(url)
+            } else {
+                showToast("Invalid phone number")
+            }
+        } catch (error) {
+            console.log('MessageFlatListItem:URL', error);
+        }
+    }
+
+    const handleEmailOnPress = async (email: string) => {
+        try {
+            const url = `mailto:${email}`
+            await Linking.openURL(url)
+        } catch (error) {
+            showToast("Failed to open email client")
+            console.log('MessageFlatListItem:URL', error)
+        }
+    }
+
     const parse: ParseShape[] = [
         {
             type: 'url',
             style: [styles.detectedLinksText],
-            onPress: () => alert('Link pressed')
+            onPress: handleUrlOnPress
         },
         {
             type: 'phone',
             style: styles.detectedLinksText,
-            onPress: () => alert('Phone pressed')
+            onPress: handlePhoneNumberOnPress
         },
         {
             type: 'email',
             style: styles.detectedLinksText,
-            onPress: () => alert('Email pressed')
+            onPress: handleEmailOnPress
         }
     ]
 
