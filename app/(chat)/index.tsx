@@ -130,10 +130,15 @@ const Chat = () => {
                 setCounter(prev => prev + 1)
             }
         })
+        socket.on('chat:messageDeleted', (payload) => {
+            setMessages(prev => prev.filter(message => message._id !== payload))
+            setCounter(prev => prev > 0 ? prev - 1 : prev)
+        })
 
         return () => {
             socket.emit('chat:leaveRoom', id)
             socket.off('chat:messageAdded')
+            socket.off('chat:messageDeleted')
         }
     }, [])
 
