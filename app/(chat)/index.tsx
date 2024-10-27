@@ -15,6 +15,8 @@ import MessageFlatListItem from '@/components/MessageFlatListItem'
 import socket from '@/api/socket'
 import { AxiosError } from 'axios'
 import { getMessages } from '@/api/messageApi'
+import * as DocumentPicker from 'expo-document-picker'
+import AttachmentPreviewFlatListItem from '@/components/AttachmentPreviewFlatListItem'
 
 const Chat = () => {
     const limit = 20
@@ -22,8 +24,9 @@ const Chat = () => {
     const { user } = useAppSelector(state => state.user)
 
     const [messages, setMessages] = useState<Message[]>([])
-    const [message, setMessage] = useState({
-        text: ''
+    const [message, setMessage] = useState<{ text: string, attachments: { uri: string, type: string, name: string }[] }>({
+        text: '',
+        attachments: []
     })
     const [isLoading, setIsLoading] = useState(false)
     const [page, setPage] = useState(0)
@@ -71,7 +74,7 @@ const Chat = () => {
                 text: message.text
             }
             socket.emit('chat:newMessage', payload)
-            setMessage({ text: '' })
+            setMessage({ text: '', attachments: [] })
         }
     }
 
@@ -82,6 +85,32 @@ const Chat = () => {
     const handleOnScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const yOffset = event.nativeEvent.contentOffset.y
         setIsNearBottom(yOffset < 200)
+    }
+
+    const handleOnPressAttach = async () => {
+        const result = await DocumentPicker.getDocumentAsync({
+            multiple: true
+        })
+
+        if (!result.canceled) {
+            console.log('selected assets:', result.assets);
+
+            setMessage(prev => ({
+                ...prev,
+                attachments: [...prev.attachments, ...result.assets.map(asset => ({
+                    uri: asset.uri,
+                    type: asset.mimeType as string,
+                    name: asset.name
+                }))]
+            }))
+        }
+    }
+
+    const handleOnPressRemove = (uri: string) => {
+        setMessage(prev => ({
+            ...prev,
+            attachments: prev.attachments.filter(attachment => attachment.uri !== uri)
+        }))
     }
 
     const fetchMessagesOnEndReached = async () => {
@@ -180,23 +209,39 @@ const Chat = () => {
                     />
                 </TouchableOpacity>
             </Animated.View>
-            <View style={[styles.inputView, { borderColor: textColor, }]}>
-                <TextInput
-                    value={message.text}
-                    placeholder='Type a message'
-                    placeholderTextColor={textColor}
-                    onChangeText={handleOnChangeText}
-                    style={[styles.textInput, { color: textColor }]}
-                    keyboardType='default'
-                    multiline
+            <View style={{ gap: 8 }}>
+                <FlatList
+                    data={message.attachments}
+                    renderItem={({ item }) => <AttachmentPreviewFlatListItem item={item} onPress={() => handleOnPressRemove(item.uri)} />}
+                    keyExtractor={(_, index) => index.toString()}
+                    horizontal
+                    contentContainerStyle={styles.previewFlatList}
                 />
-                <TouchableOpacity style={styles.sendBtn} onPress={handleOnPressSend}>
-                    <Ionicons
-                        name='send'
-                        color={textColor}
-                        size={18}
+                <View style={[styles.inputView, { borderColor: textColor, }]}>
+                    <TextInput
+                        value={message.text}
+                        placeholder='Type a message'
+                        placeholderTextColor={textColor}
+                        onChangeText={handleOnChangeText}
+                        style={[styles.textInput, { color: textColor }]}
+                        keyboardType='default'
+                        multiline
                     />
-                </TouchableOpacity>
+                    <TouchableOpacity style={styles.sendBtn} onPress={handleOnPressAttach}>
+                        <Ionicons
+                            name='attach'
+                            color={textColor}
+                            size={18}
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.sendBtn} onPress={handleOnPressSend}>
+                        <Ionicons
+                            name='send'
+                            color={textColor}
+                            size={18}
+                        />
+                    </TouchableOpacity>
+                </View>
             </View>
             <Animated.View style={fakeView} />
         </ThemedView>
@@ -223,7 +268,8 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        gap: 8
     },
     textInput: {
         flex: 1
@@ -244,5 +290,8 @@ const styles = StyleSheet.create({
     },
     scrollToBottomBtn: {
         padding: 8
+    },
+    previewFlatList: {
+        gap: 8
     }
 })
