@@ -93,8 +93,6 @@ const Chat = () => {
         })
 
         if (!result.canceled) {
-            console.log('selected assets:', result.assets);
-
             setMessage(prev => ({
                 ...prev,
                 attachments: [...prev.attachments, ...result.assets.map(asset => ({
