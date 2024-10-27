@@ -1,4 +1,5 @@
 import AudioPreviewFlatListItem from './AudioPreviewFlatListItem'
+import DocumentPreviewFlatListItem from './DocumentPreviewFlatListItem'
 import ImagePreviewFlatListItem from './ImagePreviewFlatListItem'
 import VideoPreviewFlatListItem from './VideoPreviewFlatListItem'
 
@@ -15,7 +16,7 @@ const AttachmentPreviewFlatListItem = ({ item, onPress }: { item: { uri: string,
         return <AudioPreviewFlatListItem name={item.name} onPress={onPress} uri={item.uri} />
     }
 
-    return null
+    return <DocumentPreviewFlatListItem name={item.name} onPress={onPress} />
 }
 
 export default AttachmentPreviewFlatListItem
