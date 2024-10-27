@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Image, Pressable, StyleSheet, View } from 'react-native'
+import { ThemedText } from './ThemedText'
 
-const ImagePreviewFlatListItem = ({ uri, onPress }: { uri: string, onPress: () => any }) => {
+const ImagePreviewFlatListItem = ({ name, uri, onPress }: { name: string, uri: string, onPress: () => any }) => {
     return (
         <View>
             <Image
@@ -15,6 +16,7 @@ const ImagePreviewFlatListItem = ({ uri, onPress }: { uri: string, onPress: () =
                     size={18}
                 />
             </Pressable>
+            <ThemedText style={styles.name} numberOfLines={1}>{name}</ThemedText>
         </View>
     )
 }
@@ -32,5 +34,10 @@ const styles = StyleSheet.create({
         top: 4,
         right: 4,
         padding: 4
+    },
+    name: {
+        fontSize: 10,
+        position: 'absolute',
+        bottom: 4
     }
 })
