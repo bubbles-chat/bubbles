@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, Image, NativeScrollEvent, NativeSyntheticEvent, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
+import { ActivityIndicator, FlatList, Image, NativeScrollEvent, NativeSyntheticEvent, PermissionsAndroid, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
@@ -14,17 +14,22 @@ import { useAppSelector } from '@/hooks/useAppSelector'
 import MessageFlatListItem from '@/components/MessageFlatListItem'
 import socket from '@/api/socket'
 import { AxiosError } from 'axios'
-import { getMessages } from '@/api/messageApi'
+import { getMessages, uploadAttachment } from '@/api/messageApi'
 import * as DocumentPicker from 'expo-document-picker'
 import AttachmentPreviewFlatListItem from '@/components/AttachmentPreviewFlatListItem'
+import * as MediaLibrary from 'expo-media-library'
+import showToast from '@/components/Toast'
+import FormData from 'form-data';
+import AttachmentUrl from '@/models/attachmentUrl.model'
 
 const Chat = () => {
     const limit = 20
     const { id, type, chatName, photoUrl } = useLocalSearchParams()
     const { user } = useAppSelector(state => state.user)
+    const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions()
 
     const [messages, setMessages] = useState<Message[]>([])
-    const [message, setMessage] = useState<{ text: string, attachments: { uri: string, type: string, name: string }[] }>({
+    const [message, setMessage] = useState<{ text: string, attachments: DocumentPicker.DocumentPickerAsset[] }>({
         text: '',
         attachments: []
     })
@@ -33,6 +38,7 @@ const Chat = () => {
     const [hasMore, setHasMore] = useState(true)
     const [isNearBottom, setIsNearBottom] = useState(true)
     const [counter, setCounter] = useState(0)
+    const [isSending, setIsSending] = useState(false)
 
     const navigation = useNavigation()
     const headerHeight = useHeaderHeight()
@@ -65,16 +71,36 @@ const Chat = () => {
         }))
     }
 
-    const handleOnPressSend = () => {
-        if (message.text.length > 0) {
-            const payload: Message = {
-                chatId: id as string,
-                sender: user?._id as string,
-                attachmentsUrl: [],
-                text: message.text
+    const handleOnPressSend = async () => {
+        setIsSending(true)
+        try {
+            if (message.text.length > 0 || message.attachments.length > 0) {
+                const results = await Promise.all(message.attachments.map(async attachment => {
+                    const formData = new FormData()
+
+                    formData.append('file', {
+                        uri: attachment.uri as string,
+                        name: attachment.name as string,
+                        type: attachment.mimeType as string
+                    })
+
+                    return { url: (await uploadAttachment(formData, id as string)).data.data?.url, mimeType: attachment.mimeType }
+                }))
+                const payload: Message = {
+                    chatId: id as string,
+                    sender: user?._id as string,
+                    attachmentsUrl: results as AttachmentUrl[],
+                    text: message.text
+                }
+                socket.emit('chat:newMessage', payload)
+                setMessage({ text: '', attachments: [] })
             }
-            socket.emit('chat:newMessage', payload)
-            setMessage({ text: '', attachments: [] })
+        } catch (e) {
+            const err = e as AxiosError
+            console.log('handleOnPressSend:', err);
+            showToast("Couldn't send message")
+        } finally {
+            setIsSending(false)
         }
     }
 
@@ -88,19 +114,27 @@ const Chat = () => {
     }
 
     const handleOnPressAttach = async () => {
-        const result = await DocumentPicker.getDocumentAsync({
-            multiple: true
-        })
+        const onPermissionGranted = async () => {
+            const result = await DocumentPicker.getDocumentAsync({
+                multiple: true
+            })
 
-        if (!result.canceled) {
-            setMessage(prev => ({
-                ...prev,
-                attachments: [...prev.attachments, ...result.assets.map(asset => ({
-                    uri: asset.uri,
-                    type: asset.mimeType as string,
-                    name: asset.name
-                }))]
-            }))
+            if (!result.canceled) {
+                setMessage(prev => ({
+                    ...prev,
+                    attachments: [...prev.attachments, ...result.assets.map(asset => asset)]
+                }))
+            }
+        }
+
+        if (mediaPermission?.granted) {
+            await onPermissionGranted()
+        } else {
+            const result = await requestMediaPermission()
+
+            if (result.granted) {
+                await onPermissionGranted()
+            }
         }
     }
 
@@ -232,13 +266,13 @@ const Chat = () => {
                             size={18}
                         />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.sendBtn} onPress={handleOnPressSend}>
+                    {isSending ? <ActivityIndicator size={'large'} /> : <TouchableOpacity style={styles.sendBtn} onPress={handleOnPressSend}>
                         <Ionicons
                             name='send'
                             color={textColor}
                             size={18}
                         />
-                    </TouchableOpacity>
+                    </TouchableOpacity>}
                 </View>
             </View>
             <Animated.View style={fakeView} />
@@ -284,7 +318,8 @@ const styles = StyleSheet.create({
         position: 'absolute',
         right: 8,
         borderRadius: 10,
-        elevation: 4
+        elevation: 4,
+        zIndex: 1
     },
     scrollToBottomBtn: {
         padding: 8
