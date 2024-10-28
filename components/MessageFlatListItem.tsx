@@ -1,4 +1,4 @@
-import { Linking, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native'
+import { Linking, Pressable, ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native'
 import Message from '@/models/Message.model'
 import { useAppSelector } from '@/hooks/useAppSelector'
 import ParsedText, { ParseShape } from 'react-native-parsed-text'
@@ -14,6 +14,7 @@ import CustomButton from './CustomButton'
 import { MaterialIcons } from '@expo/vector-icons'
 import CustomTextInput from './CustomTextInput'
 import { InputState } from '@/types/types'
+import AttachmentMessageFlatListItems from './AttachmentMessageFlatListItems'
 
 const MessageFlatListItem = ({ item }: { item: Message }) => {
     const { user } = useAppSelector(state => state.user)
@@ -215,12 +216,13 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
                     start={{ x: 0, y: 1 }}
                     end={{ x: 1, y: 0 }}
                 >
-                    <ParsedText
+                    {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems item={attachment} key={attachment.url} />)}
+                    {item.text.length > 0 && <ParsedText
                         style={{ color: textColor }}
                         parse={parse}
                     >
                         {item.text}
-                    </ParsedText>
+                    </ParsedText>}
                     <Text style={[styles.timeText, { color: tint }]}>{sentAtText}</Text>
                 </LinearGradient>
             </Pressable>
@@ -230,12 +232,13 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
 
         return (
             <View style={[styles.container, { backgroundColor: bubbleBackground, alignSelf: 'flex-start' }]}>
-                <ParsedText
+                {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems item={attachment} key={attachment.url} />)}
+                {item.text.length > 0 && <ParsedText
                     style={{ color: textColor }}
                     parse={parse}
                 >
                     {item.text}
-                </ParsedText>
+                </ParsedText>}
                 <Text style={[styles.timeText, { color: tint }]}>{sentAtText}</Text>
             </View>
         )
@@ -248,7 +251,8 @@ const styles = StyleSheet.create({
     container: {
         maxWidth: '70%',
         padding: 8,
-        borderRadius: 10
+        borderRadius: 10,
+        gap: 8
     },
     detectedLinksText: {
         textDecorationLine: 'underline'
