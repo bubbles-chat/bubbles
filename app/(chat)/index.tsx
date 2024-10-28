@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, Image, NativeScrollEvent, NativeSyntheticEvent, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
+import { ActivityIndicator, FlatList, Image, NativeScrollEvent, NativeSyntheticEvent, PermissionsAndroid, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
@@ -14,22 +14,31 @@ import { useAppSelector } from '@/hooks/useAppSelector'
 import MessageFlatListItem from '@/components/MessageFlatListItem'
 import socket from '@/api/socket'
 import { AxiosError } from 'axios'
-import { getMessages } from '@/api/messageApi'
+import { getMessages, uploadAttachment } from '@/api/messageApi'
+import * as DocumentPicker from 'expo-document-picker'
+import AttachmentPreviewFlatListItem from '@/components/AttachmentPreviewFlatListItem'
+import * as MediaLibrary from 'expo-media-library'
+import showToast from '@/components/Toast'
+import FormData from 'form-data';
+import AttachmentUrl from '@/models/attachmentUrl.model'
 
 const Chat = () => {
     const limit = 20
     const { id, type, chatName, photoUrl } = useLocalSearchParams()
     const { user } = useAppSelector(state => state.user)
+    const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions()
 
     const [messages, setMessages] = useState<Message[]>([])
-    const [message, setMessage] = useState({
-        text: ''
+    const [message, setMessage] = useState<{ text: string, attachments: DocumentPicker.DocumentPickerAsset[] }>({
+        text: '',
+        attachments: []
     })
     const [isLoading, setIsLoading] = useState(false)
     const [page, setPage] = useState(0)
     const [hasMore, setHasMore] = useState(true)
     const [isNearBottom, setIsNearBottom] = useState(true)
     const [counter, setCounter] = useState(0)
+    const [isSending, setIsSending] = useState(false)
 
     const navigation = useNavigation()
     const headerHeight = useHeaderHeight()
@@ -62,16 +71,36 @@ const Chat = () => {
         }))
     }
 
-    const handleOnPressSend = () => {
-        if (message.text.length > 0) {
-            const payload: Message = {
-                chatId: id as string,
-                sender: user?._id as string,
-                attachmentsUrl: [],
-                text: message.text
+    const handleOnPressSend = async () => {
+        setIsSending(true)
+        try {
+            if (message.text.length > 0 || message.attachments.length > 0) {
+                const results = await Promise.all(message.attachments.map(async attachment => {
+                    const formData = new FormData()
+
+                    formData.append('file', {
+                        uri: attachment.uri as string,
+                        name: attachment.name as string,
+                        type: attachment.mimeType as string
+                    })
+
+                    return { url: (await uploadAttachment(formData, id as string)).data.data?.url, mimeType: attachment.mimeType }
+                }))
+                const payload: Message = {
+                    chatId: id as string,
+                    sender: user?._id as string,
+                    attachmentsUrl: results as AttachmentUrl[],
+                    text: message.text
+                }
+                socket.emit('chat:newMessage', payload)
+                setMessage({ text: '', attachments: [] })
             }
-            socket.emit('chat:newMessage', payload)
-            setMessage({ text: '' })
+        } catch (e) {
+            const err = e as AxiosError
+            console.log('handleOnPressSend:', err);
+            showToast("Couldn't send message")
+        } finally {
+            setIsSending(false)
         }
     }
 
@@ -82,6 +111,38 @@ const Chat = () => {
     const handleOnScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const yOffset = event.nativeEvent.contentOffset.y
         setIsNearBottom(yOffset < 200)
+    }
+
+    const handleOnPressAttach = async () => {
+        const onPermissionGranted = async () => {
+            const result = await DocumentPicker.getDocumentAsync({
+                multiple: true
+            })
+
+            if (!result.canceled) {
+                setMessage(prev => ({
+                    ...prev,
+                    attachments: [...prev.attachments, ...result.assets.map(asset => asset)]
+                }))
+            }
+        }
+
+        if (mediaPermission?.granted) {
+            await onPermissionGranted()
+        } else {
+            const result = await requestMediaPermission()
+
+            if (result.granted) {
+                await onPermissionGranted()
+            }
+        }
+    }
+
+    const handleOnPressRemove = (uri: string) => {
+        setMessage(prev => ({
+            ...prev,
+            attachments: prev.attachments.filter(attachment => attachment.uri !== uri)
+        }))
     }
 
     const fetchMessagesOnEndReached = async () => {
@@ -180,23 +241,39 @@ const Chat = () => {
                     />
                 </TouchableOpacity>
             </Animated.View>
-            <View style={[styles.inputView, { borderColor: textColor, }]}>
-                <TextInput
-                    value={message.text}
-                    placeholder='Type a message'
-                    placeholderTextColor={textColor}
-                    onChangeText={handleOnChangeText}
-                    style={[styles.textInput, { color: textColor }]}
-                    keyboardType='default'
-                    multiline
+            <View style={{ gap: 8 }}>
+                <FlatList
+                    data={message.attachments}
+                    renderItem={({ item }) => <AttachmentPreviewFlatListItem item={item} onPress={() => handleOnPressRemove(item.uri)} />}
+                    keyExtractor={(_, index) => index.toString()}
+                    horizontal
+                    contentContainerStyle={styles.previewFlatList}
                 />
-                <TouchableOpacity style={styles.sendBtn} onPress={handleOnPressSend}>
-                    <Ionicons
-                        name='send'
-                        color={textColor}
-                        size={18}
+                <View style={[styles.inputView, { borderColor: textColor, }]}>
+                    <TextInput
+                        value={message.text}
+                        placeholder='Type a message'
+                        placeholderTextColor={textColor}
+                        onChangeText={handleOnChangeText}
+                        style={[styles.textInput, { color: textColor }]}
+                        keyboardType='default'
+                        multiline
                     />
-                </TouchableOpacity>
+                    <TouchableOpacity style={styles.sendBtn} onPress={handleOnPressAttach}>
+                        <Ionicons
+                            name='attach'
+                            color={textColor}
+                            size={18}
+                        />
+                    </TouchableOpacity>
+                    {isSending ? <ActivityIndicator size={'large'} /> : <TouchableOpacity style={styles.sendBtn} onPress={handleOnPressSend}>
+                        <Ionicons
+                            name='send'
+                            color={textColor}
+                            size={18}
+                        />
+                    </TouchableOpacity>}
+                </View>
             </View>
             <Animated.View style={fakeView} />
         </ThemedView>
@@ -223,7 +300,8 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        gap: 8
     },
     textInput: {
         flex: 1
@@ -240,9 +318,13 @@ const styles = StyleSheet.create({
         position: 'absolute',
         right: 8,
         borderRadius: 10,
-        elevation: 4
+        elevation: 4,
+        zIndex: 1
     },
     scrollToBottomBtn: {
         padding: 8
+    },
+    previewFlatList: {
+        gap: 8
     }
 })
