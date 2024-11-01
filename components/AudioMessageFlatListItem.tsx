@@ -7,7 +7,21 @@ import Slider from '@react-native-community/slider'
 import { ThemedText } from './ThemedText'
 import { convertMillisToTime } from '@/utils/date'
 
-const AudioMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) => {
+const AudioMessageFlatListItem = ({
+    uri,
+    name,
+    doesExist,
+    progress,
+    isDownloading,
+    onPressDownload
+}: {
+    uri: string,
+    name: string,
+    doesExist: boolean,
+    progress: number,
+    isDownloading: boolean,
+    onPressDownload: () => any
+}) => {
     const [sound, setSound] = useState<Audio.Sound>()
     const [isPlaying, setIsPlaying] = useState(false)
     const [sliderValue, setSliderValue] = useState(0)
@@ -101,6 +115,15 @@ const AudioMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) 
             </View>
             <View style={styles.rowView}>
                 <ThemedText style={styles.timeText}>{currentPosition}</ThemedText>
+                <View>
+                    {!doesExist && !isDownloading ? <Pressable onPress={onPressDownload}>
+                        <Ionicons
+                            name='download-outline'
+                            size={30}
+                            color={textColor}
+                        />
+                    </Pressable> : isDownloading ? <ThemedText>{progress}%</ThemedText> : null}
+                </View>
                 <ThemedText style={styles.timeText}>{duration}</ThemedText>
             </View>
         </View>

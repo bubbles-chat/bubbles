@@ -1,9 +1,23 @@
-import { StyleSheet, useColorScheme, View } from 'react-native'
+import { Pressable, StyleSheet, useColorScheme, View } from 'react-native'
 import { Colors } from '@/constants/Colors'
 import { Ionicons } from '@expo/vector-icons'
 import { ThemedText } from './ThemedText'
 
-const DocumentMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) => {
+const DocumentMessageFlatListItem = ({
+    uri,
+    name,
+    doesExist,
+    progress,
+    isDownloading,
+    onPressDownload
+}: {
+    uri: string,
+    name: string,
+    doesExist: boolean,
+    progress: number,
+    isDownloading: boolean,
+    onPressDownload: () => any
+}) => {
     const colorScheme = useColorScheme()
     const textColor = colorScheme === 'dark' ? Colors.dark.text : Colors.light.text
     const backgroundColor = colorScheme === 'dark' ? Colors.dark.background : Colors.light.background
@@ -18,11 +32,15 @@ const DocumentMessageFlatListItem = ({ uri, name }: { uri: string, name: string 
                 />
                 <ThemedText numberOfLines={1}>{name}</ThemedText>
             </View>
-            <Ionicons
-                name='download-outline'
-                color={textColor}
-                size={20}
-            />
+            <View>
+                {!doesExist && !isDownloading ? <Pressable onPress={onPressDownload}>
+                    <Ionicons
+                        name='download-outline'
+                        size={30}
+                        color={textColor}
+                    />
+                </Pressable> : isDownloading ? <ThemedText>{progress}</ThemedText> : null}
+            </View>
         </View>
     )
 }

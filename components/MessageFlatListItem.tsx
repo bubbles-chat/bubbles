@@ -216,7 +216,11 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
                     start={{ x: 0, y: 1 }}
                     end={{ x: 1, y: 0 }}
                 >
-                    {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems item={attachment} key={attachment.url} />)}
+                    {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems
+                        item={attachment}
+                        key={attachment.url}
+                        chatId={item.chatId as string}
+                    />)}
                     {item.text.length > 0 && <ParsedText
                         style={{ color: textColor }}
                         parse={parse}
@@ -232,7 +236,11 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
 
         return (
             <View style={[styles.container, { backgroundColor: bubbleBackground, alignSelf: 'flex-start' }]}>
-                {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems item={attachment} key={attachment.url} />)}
+                {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems
+                    item={attachment}
+                    key={attachment.url}
+                    chatId={item.chatId as string}
+                />)}
                 {item.text.length > 0 && <ParsedText
                     style={{ color: textColor }}
                     parse={parse}
