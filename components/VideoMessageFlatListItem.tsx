@@ -14,12 +14,12 @@ const VideoMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) 
     }
 
     return (
-        <View>
+        <View style={styles.container}>
             <Video
                 ref={videoRef}
                 style={styles.video}
                 source={{ uri }}
-                resizeMode={ResizeMode.COVER}
+                resizeMode={ResizeMode.CONTAIN}
                 useNativeControls
                 onPlaybackStatusUpdate={onPlaybackStatusUpdate}
             />
@@ -31,10 +31,15 @@ const VideoMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) 
 export default VideoMessageFlatListItem
 
 const styles = StyleSheet.create({
-    video: {
+    container: {
         width: 200,
         height: 200,
-        borderRadius: 8
+        borderRadius: 8,
+        backgroundColor: '#000'
+    },
+    video: {
+        width: 200,
+        height: 200
     },
     name: {
         position: 'absolute',
