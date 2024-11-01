@@ -31,7 +31,7 @@ const AudioMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) 
             }
             if (status.isLoaded && status.didJustFinish) {
                 setIsPlaying(false)
-                sound.setPositionAsync(0)
+                await sound.setPositionAsync(0)
                 await sound.pauseAsync()
             }
         })
@@ -44,7 +44,7 @@ const AudioMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) 
     }
 
     const pauseSound = async () => {
-        sound?.pauseAsync()
+        await sound?.pauseAsync()
         setIsPlaying(false)
     }
 
@@ -59,6 +59,14 @@ const AudioMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) 
     useEffect(() => {
         loadSound()
     }, [])
+
+    useEffect(() => {
+        return sound
+            ? () => {
+                sound.unloadAsync();
+            }
+            : undefined;
+    }, [sound]);
 
     return (
         <View style={[styles.container, { borderColor: textColor, backgroundColor }]}>
