@@ -3,7 +3,7 @@ import { Colors } from '@/constants/Colors'
 import { Ionicons } from '@expo/vector-icons'
 import { ThemedText } from './ThemedText'
 
-const DocumentMessageFlatListItem = ({ uri, type }: { uri: string, type: string }) => {
+const DocumentMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) => {
     const colorScheme = useColorScheme()
     const textColor = colorScheme === 'dark' ? Colors.dark.text : Colors.light.text
     const backgroundColor = colorScheme === 'dark' ? Colors.dark.background : Colors.light.background
@@ -16,7 +16,7 @@ const DocumentMessageFlatListItem = ({ uri, type }: { uri: string, type: string 
                     color={textColor}
                     size={40}
                 />
-                <ThemedText>{type.split('/')[1]}</ThemedText>
+                <ThemedText numberOfLines={1}>{name}</ThemedText>
             </View>
             <Ionicons
                 name='download-outline'
@@ -36,6 +36,8 @@ const styles = StyleSheet.create({
         padding: 8,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        gap: 8,
+        width: 200
     },
 })

@@ -1,6 +1,7 @@
 import { Image, StyleSheet, View } from 'react-native'
+import { ThemedText } from './ThemedText'
 
-const ImageMessageFlatListItem = ({ uri }: { uri: string }) => {
+const ImageMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) => {
     return (
         <View>
             <Image
@@ -8,6 +9,7 @@ const ImageMessageFlatListItem = ({ uri }: { uri: string }) => {
                 source={{ uri }}
                 resizeMode='cover'
             />
+            <ThemedText style={styles.name} numberOfLines={1}>{name}</ThemedText>
         </View>
     )
 }
@@ -19,5 +21,10 @@ const styles = StyleSheet.create({
         width: 200,
         height: 200,
         borderRadius: 8
+    },
+    name: {
+        position: 'absolute',
+        paddingHorizontal: 4,
+        paddingTop: 4
     }
 })

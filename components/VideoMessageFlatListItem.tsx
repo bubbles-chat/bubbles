@@ -1,8 +1,9 @@
 import { StyleSheet, View } from 'react-native'
 import { useRef } from 'react'
 import { AVPlaybackStatus, ResizeMode, Video } from 'expo-av'
+import { ThemedText } from './ThemedText'
 
-const VideoMessageFlatListItem = ({ uri }: { uri: string }) => {
+const VideoMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) => {
     const videoRef = useRef<Video>(null)
 
     const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
@@ -22,6 +23,7 @@ const VideoMessageFlatListItem = ({ uri }: { uri: string }) => {
                 useNativeControls
                 onPlaybackStatusUpdate={onPlaybackStatusUpdate}
             />
+            <ThemedText style={styles.name} numberOfLines={1}>{name}</ThemedText>
         </View>
     )
 }
@@ -33,5 +35,10 @@ const styles = StyleSheet.create({
         width: 200,
         height: 200,
         borderRadius: 8
+    },
+    name: {
+        position: 'absolute',
+        paddingHorizontal: 4,
+        paddingTop: 4
     }
 })

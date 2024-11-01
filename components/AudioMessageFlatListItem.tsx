@@ -7,7 +7,7 @@ import Slider from '@react-native-community/slider'
 import { ThemedText } from './ThemedText'
 import { convertMillisToTime } from '@/utils/date'
 
-const AudioMessageFlatListItem = ({ uri }: { uri: string }) => {
+const AudioMessageFlatListItem = ({ uri, name }: { uri: string, name: string }) => {
     const [sound, setSound] = useState<Audio.Sound>()
     const [isPlaying, setIsPlaying] = useState(false)
     const [sliderValue, setSliderValue] = useState(0)
@@ -62,6 +62,7 @@ const AudioMessageFlatListItem = ({ uri }: { uri: string }) => {
 
     return (
         <View style={[styles.container, { borderColor: textColor, backgroundColor }]}>
+            <ThemedText numberOfLines={1}>{name}</ThemedText>
             <View style={styles.rowView}>
                 <Ionicons
                     name='musical-note'

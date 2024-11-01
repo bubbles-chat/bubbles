@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { compareDates, getDayName } from '@/utils/date'
 import showToast from './Toast'
 import socket from '@/api/socket'
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import CustomModal from './CustomModal'
 import { ThemedText } from './ThemedText'
 import CustomButton from './CustomButton'
@@ -245,7 +245,7 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
     }
 }
 
-export default MessageFlatListItem
+export default memo(MessageFlatListItem)
 
 const styles = StyleSheet.create({
     container: {
