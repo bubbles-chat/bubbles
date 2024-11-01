@@ -1,4 +1,4 @@
-import AttachmentUrl from "./attachmentUrl.model";
+import AttachmentUrl from "./AttachmentUrl.model";
 import Chat from "./Chat.model";
 import User from "./User.model";
 
