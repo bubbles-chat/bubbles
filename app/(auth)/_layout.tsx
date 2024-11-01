@@ -1,5 +1,5 @@
+import BlurViewContainer from '@/components/BlurViewContainer'
 import { Colors } from '@/constants/Colors'
-import { BlurView } from 'expo-blur'
 import { Stack } from 'expo-router'
 import { useColorScheme } from 'react-native'
 
@@ -9,12 +9,7 @@ const AuthLayout = () => {
   return (
     <Stack
       screenOptions={({ route }) => ({
-        headerBackground: () => <BlurView
-          experimentalBlurMethod='dimezisBlurView'
-          intensity={80}
-          tint={colorScheme === 'dark' ? 'dark' : 'light'}
-          style={{ flex: 1 }}
-        />,
+        headerBackground: () => <BlurViewContainer />,
         headerTransparent: true,
         headerTitleStyle: {
           color: colorScheme === 'dark' ? Colors.dark.text : Colors.light.text

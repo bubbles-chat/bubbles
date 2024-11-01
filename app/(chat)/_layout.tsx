@@ -1,7 +1,7 @@
 import { useColorScheme } from 'react-native'
 import { Stack } from 'expo-router'
-import { BlurView } from 'expo-blur'
 import { Colors } from '@/constants/Colors'
+import BlurViewContainer from '@/components/BlurViewContainer'
 
 const ChatLayout = () => {
     const colorScheme = useColorScheme()
@@ -10,12 +10,7 @@ const ChatLayout = () => {
     return (
         <Stack
             screenOptions={{
-                headerBackground: () => <BlurView
-                    experimentalBlurMethod='dimezisBlurView'
-                    intensity={80}
-                    tint={colorScheme === 'dark' ? 'dark' : 'light'}
-                    style={{ flex: 1 }}
-                />,
+                headerBackground: () => <BlurViewContainer />,
                 headerTransparent: true,
                 headerTitleStyle: {
                     color: textColor
