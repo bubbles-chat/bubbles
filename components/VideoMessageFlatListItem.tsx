@@ -4,6 +4,7 @@ import { AVPlaybackStatus, ResizeMode, Video } from 'expo-av'
 import { ThemedText } from './ThemedText'
 import { Ionicons } from '@expo/vector-icons'
 import { useThemeColor } from '@/hooks/useThemeColor'
+import { AttachmentMessageFlatListItemProps } from '@/types/types'
 
 const VideoMessageFlatListItem = ({
     uri,
@@ -12,14 +13,7 @@ const VideoMessageFlatListItem = ({
     progress,
     isDownloading,
     onPressDownload
-}: {
-    uri: string,
-    name: string,
-    doesExist: boolean,
-    progress: number,
-    isDownloading: boolean,
-    onPressDownload: () => any
-}) => {
+}: AttachmentMessageFlatListItemProps) => {
     const videoRef = useRef<Video>(null)
     const text = useThemeColor({}, 'text') as string
 

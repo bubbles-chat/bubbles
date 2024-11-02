@@ -6,6 +6,7 @@ import { Audio } from 'expo-av'
 import Slider from '@react-native-community/slider'
 import { ThemedText } from './ThemedText'
 import { convertMillisToTime } from '@/utils/date'
+import { AttachmentMessageFlatListItemProps } from '@/types/types'
 
 const AudioMessageFlatListItem = ({
     uri,
@@ -14,14 +15,7 @@ const AudioMessageFlatListItem = ({
     progress,
     isDownloading,
     onPressDownload
-}: {
-    uri: string,
-    name: string,
-    doesExist: boolean,
-    progress: number,
-    isDownloading: boolean,
-    onPressDownload: () => any
-}) => {
+}: AttachmentMessageFlatListItemProps) => {
     const [sound, setSound] = useState<Audio.Sound>()
     const [isPlaying, setIsPlaying] = useState(false)
     const [sliderValue, setSliderValue] = useState(0)
