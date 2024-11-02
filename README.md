@@ -34,7 +34,7 @@ This is a restructured project based on the original [Bubbles project](https://g
    npx expo start --dev-client
    ```
    ---
-   ## Notes
+## Notes
 Some components, such as `CustomModal`, screen headers, and tab bars, use the `BlurView` component from the `expo-blur` module as a background effect. Currently, the blur effect is disabled for headers and tab bars due to graphical issues on Android when used with `react-native-screens`, as outlined in the [expo-blur documentation](https://docs.expo.dev/versions/latest/sdk/blur-view/#:~:text=This%20method%20may%20lead%20to%20decreased%20performance%20and%20rendering%20issues%20during%20transitions%20made%20by%20react%2Dnative%2Dscreens).
 
 If you enable the blur effect on Android and encounter graphical issues (e.g., a blank white screen during screen transitions), you can temporarily resolve this by putting the app in the background and then reopening it. This workaround helps to refresh the screen, mitigating the graphical issue.
