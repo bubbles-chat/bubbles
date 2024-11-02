@@ -14,7 +14,8 @@ const AudioMessageFlatListItem = ({
     doesExist,
     progress,
     isDownloading,
-    onPressDownload
+    onPressDownload,
+    onPressShare
 }: AttachmentMessageFlatListItemProps) => {
     const [sound, setSound] = useState<Audio.Sound>()
     const [isPlaying, setIsPlaying] = useState(false)
@@ -78,7 +79,16 @@ const AudioMessageFlatListItem = ({
 
     return (
         <View style={[styles.container, { borderColor: textColor, backgroundColor }]}>
-            <ThemedText numberOfLines={1}>{name}</ThemedText>
+            <View style={styles.header}>
+                <ThemedText numberOfLines={1}>{name}</ThemedText>
+                {doesExist && <Pressable onPress={onPressShare}>
+                    <Ionicons
+                        name='share-outline'
+                        color={textColor}
+                        size={25}
+                    />
+                </Pressable>}
+            </View>
             <View style={styles.rowView}>
                 <Ionicons
                     name='musical-note'
@@ -146,5 +156,13 @@ const styles = StyleSheet.create({
     },
     timeText: {
         fontSize: 11
+    },
+    header: {
+        paddingHorizontal: 4,
+        paddingTop: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%'
     }
 })

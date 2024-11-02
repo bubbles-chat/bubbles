@@ -12,7 +12,8 @@ const VideoMessageFlatListItem = ({
     doesExist,
     progress,
     isDownloading,
-    onPressDownload
+    onPressDownload,
+    onPressShare
 }: AttachmentMessageFlatListItemProps) => {
     const videoRef = useRef<Video>(null)
     const text = useThemeColor({}, 'text') as string
@@ -43,7 +44,16 @@ const VideoMessageFlatListItem = ({
                     />
                 </Pressable> : isDownloading ? <ThemedText>{progress}</ThemedText> : null}
             </View>
-            <ThemedText style={styles.name} numberOfLines={1}>{name}</ThemedText>
+            <View style={styles.header}>
+                <ThemedText style={styles.name} numberOfLines={1}>{name}</ThemedText>
+                {doesExist && <Pressable onPress={onPressShare}>
+                    <Ionicons
+                        name='share-outline'
+                        color={text}
+                        size={30}
+                    />
+                </Pressable>}
+            </View>
         </View>
     )
 }
@@ -61,14 +71,21 @@ const styles = StyleSheet.create({
         width: 200,
         height: 200
     },
-    name: {
+    header: {
         position: 'absolute',
         paddingHorizontal: 4,
-        paddingTop: 4
+        paddingTop: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: 200
     },
     centeredView: {
         position: 'absolute',
         alignSelf: 'center',
         top: 80
+    },
+    name: {
+        flex: 0.8
     }
 })

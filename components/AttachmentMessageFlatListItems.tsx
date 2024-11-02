@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import showToast from './Toast'
 import { Alert, Platform } from 'react-native'
 import * as IntentLauncher from 'expo-intent-launcher'
+import * as Sharing from 'expo-sharing'
 
 const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl, chatId: string }) => {
     const [deosExist, setDeosExist] = useState(false)
@@ -70,6 +71,14 @@ const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl,
         }
     }
 
+    const onPressShare = async () => {
+        if (await Sharing.isAvailableAsync()) {
+            await Sharing.shareAsync(path, {
+                mimeType: item.mimeType
+            })
+        }
+    }
+
     useEffect(() => {
         checkIfFileExists()
     }, [])
@@ -83,6 +92,7 @@ const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl,
             progress={progress}
             onPressDownload={onPressDownload}
             onPressOpen={onPressOpen}
+            onPressShare={onPressShare}
         />
     }
 
@@ -94,6 +104,7 @@ const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl,
             isDownloading={isDownloading}
             progress={progress}
             onPressDownload={onPressDownload}
+            onPressShare={onPressShare}
         />
     }
 
@@ -105,6 +116,7 @@ const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl,
             isDownloading={isDownloading}
             progress={progress}
             onPressDownload={onPressDownload}
+            onPressShare={onPressShare}
         />
     }
 
@@ -116,6 +128,7 @@ const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl,
         progress={progress}
         onPressDownload={onPressDownload}
         onPressOpen={onPressOpen}
+        onPressShare={onPressShare}
     />
 }
 
