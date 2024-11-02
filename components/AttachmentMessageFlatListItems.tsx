@@ -6,6 +6,8 @@ import DocumentMessageFlatListItem from './DocumentMessageFlatListItem'
 import * as FileSystem from 'expo-file-system'
 import { useEffect, useState } from 'react'
 import showToast from './Toast'
+import { Alert, Platform } from 'react-native'
+import * as IntentLauncher from 'expo-intent-launcher'
 
 const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl, chatId: string }) => {
     const [deosExist, setDeosExist] = useState(false)
@@ -49,6 +51,25 @@ const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl,
         }
     }
 
+    const onPressOpen = async () => {
+        const contentUri = await FileSystem.getContentUriAsync(path)
+
+        if (Platform.OS === 'android') {
+            await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
+                data: contentUri,
+                type: item.mimeType,
+                flags: 1
+            })
+        } else {
+            Alert.alert("Action not supported", "Opening files is currently supported on Android only.", [
+                {
+                    text: "OK",
+                    style: "default"
+                }
+            ])
+        }
+    }
+
     useEffect(() => {
         checkIfFileExists()
     }, [])
@@ -61,6 +82,7 @@ const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl,
             isDownloading={isDownloading}
             progress={progress}
             onPressDownload={onPressDownload}
+            onPressOpen={onPressOpen}
         />
     }
 
@@ -93,6 +115,7 @@ const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl,
         isDownloading={isDownloading}
         progress={progress}
         onPressDownload={onPressDownload}
+        onPressOpen={onPressOpen}
     />
 }
 

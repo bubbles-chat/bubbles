@@ -2,6 +2,7 @@ import { Image, Pressable, StyleSheet, View } from 'react-native'
 import { ThemedText } from './ThemedText'
 import { Ionicons } from '@expo/vector-icons'
 import { useThemeColor } from '@/hooks/useThemeColor'
+import { AttachmentMessageFlatListItemProps } from '@/types/types'
 
 const ImageMessageFlatListItem = ({
     uri,
@@ -9,15 +10,9 @@ const ImageMessageFlatListItem = ({
     doesExist,
     progress,
     isDownloading,
-    onPressDownload
-}: {
-    uri: string,
-    name: string,
-    doesExist: boolean,
-    progress: number,
-    isDownloading: boolean,
-    onPressDownload: () => any
-}) => {
+    onPressDownload,
+    onPressOpen
+}: AttachmentMessageFlatListItemProps) => {
     const text = useThemeColor({}, 'text') as string
 
     return (
@@ -34,7 +29,15 @@ const ImageMessageFlatListItem = ({
                         size={40}
                         color={text}
                     />
-                </Pressable> : isDownloading ? <ThemedText>{progress}%</ThemedText> : null}
+                </Pressable> :
+                    isDownloading ? <ThemedText>{progress}%</ThemedText> :
+                        <Pressable onPress={onPressOpen}>
+                            <Ionicons
+                                name='open-outline'
+                                size={40}
+                                color={text}
+                            />
+                        </Pressable>}
             </View>
             <ThemedText style={styles.name} numberOfLines={1}>{name}</ThemedText>
         </View>
