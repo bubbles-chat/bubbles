@@ -39,3 +39,14 @@ export interface LoadingProps extends ModalProps {
     lightColor?: string
     darkColor?: string
 }
+
+export interface AttachmentMessageFlatListItemProps {
+    uri: string
+    name: string
+    doesExist: boolean
+    progress: number
+    isDownloading: boolean
+    onPressDownload: () => any
+    onPressOpen?: () => any
+    onPressShare?: () => any
+}

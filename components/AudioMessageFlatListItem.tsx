@@ -6,8 +6,17 @@ import { Audio } from 'expo-av'
 import Slider from '@react-native-community/slider'
 import { ThemedText } from './ThemedText'
 import { convertMillisToTime } from '@/utils/date'
+import { AttachmentMessageFlatListItemProps } from '@/types/types'
 
-const AudioMessageFlatListItem = ({ uri }: { uri: string }) => {
+const AudioMessageFlatListItem = ({
+    uri,
+    name,
+    doesExist,
+    progress,
+    isDownloading,
+    onPressDownload,
+    onPressShare
+}: AttachmentMessageFlatListItemProps) => {
     const [sound, setSound] = useState<Audio.Sound>()
     const [isPlaying, setIsPlaying] = useState(false)
     const [sliderValue, setSliderValue] = useState(0)
@@ -31,7 +40,7 @@ const AudioMessageFlatListItem = ({ uri }: { uri: string }) => {
             }
             if (status.isLoaded && status.didJustFinish) {
                 setIsPlaying(false)
-                sound.setPositionAsync(0)
+                await sound.setPositionAsync(0)
                 await sound.pauseAsync()
             }
         })
@@ -44,7 +53,7 @@ const AudioMessageFlatListItem = ({ uri }: { uri: string }) => {
     }
 
     const pauseSound = async () => {
-        sound?.pauseAsync()
+        await sound?.pauseAsync()
         setIsPlaying(false)
     }
 
@@ -60,8 +69,26 @@ const AudioMessageFlatListItem = ({ uri }: { uri: string }) => {
         loadSound()
     }, [])
 
+    useEffect(() => {
+        return sound
+            ? () => {
+                sound.unloadAsync();
+            }
+            : undefined;
+    }, [sound]);
+
     return (
         <View style={[styles.container, { borderColor: textColor, backgroundColor }]}>
+            <View style={styles.header}>
+                <ThemedText numberOfLines={1}>{name}</ThemedText>
+                {doesExist && <Pressable onPress={onPressShare}>
+                    <Ionicons
+                        name='share-outline'
+                        color={textColor}
+                        size={25}
+                    />
+                </Pressable>}
+            </View>
             <View style={styles.rowView}>
                 <Ionicons
                     name='musical-note'
@@ -92,6 +119,15 @@ const AudioMessageFlatListItem = ({ uri }: { uri: string }) => {
             </View>
             <View style={styles.rowView}>
                 <ThemedText style={styles.timeText}>{currentPosition}</ThemedText>
+                <View>
+                    {!doesExist && !isDownloading ? <Pressable onPress={onPressDownload}>
+                        <Ionicons
+                            name='download-outline'
+                            size={30}
+                            color={textColor}
+                        />
+                    </Pressable> : isDownloading ? <ThemedText>{progress}%</ThemedText> : null}
+                </View>
                 <ThemedText style={styles.timeText}>{duration}</ThemedText>
             </View>
         </View>
@@ -120,5 +156,13 @@ const styles = StyleSheet.create({
     },
     timeText: {
         fontSize: 11
+    },
+    header: {
+        paddingHorizontal: 4,
+        paddingTop: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%'
     }
 })

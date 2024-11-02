@@ -2,7 +2,6 @@ import Message from "@/models/Message.model";
 import axios, { AxiosResponse } from "axios";
 import client from "./client";
 import { updateAuthHeaders } from "@/utils/jwt";
-import FormData from 'form-data';
 import auth from '@react-native-firebase/auth'
 
 export async function getMessages(chatId: string, limit: number, skip: number): Promise<AxiosResponse<{ message: string, messages: Message[] }>> {

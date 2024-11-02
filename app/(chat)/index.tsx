@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, Image, NativeScrollEvent, NativeSyntheticEvent, PermissionsAndroid, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
+import { ActivityIndicator, FlatList, Image, NativeScrollEvent, NativeSyntheticEvent, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
@@ -19,8 +19,7 @@ import * as DocumentPicker from 'expo-document-picker'
 import AttachmentPreviewFlatListItem from '@/components/AttachmentPreviewFlatListItem'
 import * as MediaLibrary from 'expo-media-library'
 import showToast from '@/components/Toast'
-import FormData from 'form-data';
-import AttachmentUrl from '@/models/attachmentUrl.model'
+import AttachmentUrl from '@/models/AttachmentUrl.model'
 
 const Chat = () => {
     const limit = 20
@@ -75,17 +74,26 @@ const Chat = () => {
         setIsSending(true)
         try {
             if (message.text.length > 0 || message.attachments.length > 0) {
-                const results = await Promise.all(message.attachments.map(async attachment => {
+                const responses = await Promise.all(message.attachments.map(async attachment => {
                     const formData = new FormData()
 
                     formData.append('file', {
                         uri: attachment.uri as string,
                         name: attachment.name as string,
                         type: attachment.mimeType as string
-                    })
+                    } as any)
 
-                    return { url: (await uploadAttachment(formData, id as string)).data.data?.url, mimeType: attachment.mimeType }
+                    return await uploadAttachment(formData, id as string)
                 }))
+
+                const results: AttachmentUrl[] = responses.map((response, index) => {
+                    return {
+                        url: response.data.data?.url as string,
+                        mimeType: message.attachments[index].mimeType as string,
+                        name: message.attachments[index].name,
+                        publicId: response.data.data?.public_id as string
+                    }
+                })
                 const payload: Message = {
                     chatId: id as string,
                     sender: user?._id as string,
@@ -97,7 +105,7 @@ const Chat = () => {
             }
         } catch (e) {
             const err = e as AxiosError
-            console.log('handleOnPressSend:', err);
+            console.log('handleOnPressSend:', err.response?.data);
             showToast("Couldn't send message")
         } finally {
             setIsSending(false)
