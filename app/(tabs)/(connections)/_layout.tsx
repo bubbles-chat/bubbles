@@ -1,23 +1,9 @@
-import {
-    createMaterialTopTabNavigator,
-    MaterialTopTabNavigationEventMap,
-    MaterialTopTabNavigationOptions
-} from '@react-navigation/material-top-tabs'
-import { ParamListBase, TabNavigationState } from '@react-navigation/native'
 import { useHeaderHeight } from '@react-navigation/elements'
-import { withLayoutContext } from 'expo-router'
 import { useColorScheme } from 'react-native'
 import { useMemo } from 'react'
 import { Colors } from '@/constants/Colors'
+import MaterialTopTabs from '@/components/navigation/MaterialTopTabs'
 
-const { Navigator } = createMaterialTopTabNavigator()
-
-export const MaterialTopTabs = withLayoutContext<
-    MaterialTopTabNavigationOptions,
-    typeof Navigator,
-    TabNavigationState<ParamListBase>,
-    MaterialTopTabNavigationEventMap
->(Navigator)
 
 const ConnectionsLayout = () => {
     const headerHeight = useHeaderHeight()
