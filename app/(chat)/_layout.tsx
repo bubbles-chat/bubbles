@@ -19,6 +19,7 @@ const ChatLayout = () => {
             }}
         >
             <Stack.Screen name='index' />
+            <Stack.Screen name='(attachments)' options={{ title: "Saved attachments" }} />
         </Stack>
     )
 }

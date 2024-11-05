@@ -45,7 +45,7 @@ const AudioPreviewFlatListItem = ({ name, uri, onPress }: { name: string, uri: s
     }, [sound])
 
     return (
-        <View style={[styles.constainer, { borderColor: textColor }]}>
+        <View style={[styles.container, { borderColor: textColor }]}>
             <Ionicons
                 name='musical-note'
                 color={textColor}
@@ -80,7 +80,7 @@ const AudioPreviewFlatListItem = ({ name, uri, onPress }: { name: string, uri: s
 export default AudioPreviewFlatListItem
 
 const styles = StyleSheet.create({
-    constainer: {
+    container: {
         height: 100,
         width: 100,
         borderRadius: 16,
