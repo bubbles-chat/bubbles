@@ -9,11 +9,13 @@ import showToast from './Toast'
 import { Alert, Platform } from 'react-native'
 import * as IntentLauncher from 'expo-intent-launcher'
 import * as Sharing from 'expo-sharing'
+import { useIsFocused } from '@react-navigation/native'
 
 const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl, chatId: string }) => {
     const [deosExist, setDeosExist] = useState(false)
     const [isDownloading, setIsDownloading] = useState(false)
     const [progress, setProgress] = useState(0)
+    const isFocused = useIsFocused()
     const path = `${FileSystem.documentDirectory}/${chatId}/${item.name}`
 
     const checkIfFileExists = async () => {
@@ -80,8 +82,10 @@ const AttachmentMessageFlatListItems = ({ item, chatId }: { item: AttachmentUrl,
     }
 
     useEffect(() => {
-        checkIfFileExists()
-    }, [])
+        if (isFocused) {
+            checkIfFileExists()
+        }
+    }, [isFocused])
 
     if (item.mimeType.includes('image')) {
         return <ImageMessageFlatListItem
