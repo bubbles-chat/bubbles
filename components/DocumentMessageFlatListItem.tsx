@@ -33,8 +33,6 @@ const DocumentMessageFlatListItem = ({
                         size={30}
                     />
                 </Pressable>}
-            </View>
-            <View>
                 {!doesExist && !isDownloading ? <Pressable onPress={onPressDownload}>
                     <Ionicons
                         name='download-outline'
@@ -42,7 +40,7 @@ const DocumentMessageFlatListItem = ({
                         color={textColor}
                     />
                 </Pressable> :
-                    isDownloading ? <ThemedText>{progress}</ThemedText> : null}
+                    isDownloading ? <ThemedText>{progress}%</ThemedText> : null}
             </View>
         </Pressable>
     )
