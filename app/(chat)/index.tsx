@@ -1,11 +1,11 @@
-import { ActivityIndicator, FlatList, Image, NativeScrollEvent, NativeSyntheticEvent, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
+import { ActivityIndicator, FlatList, Image, NativeScrollEvent, NativeSyntheticEvent, Pressable, StyleSheet, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
-import { useLocalSearchParams, useNavigation } from 'expo-router'
+import { router, useLocalSearchParams, useNavigation } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '@/components/ThemedText'
 import { Colors } from '@/constants/Colors'
-import { Feather, Ionicons } from '@expo/vector-icons'
+import { Entypo, Feather, Ionicons } from '@expo/vector-icons'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import useGradualAnimation from '@/hooks/useGradualAnimation'
 import { PADDING_BOTTOM } from '@/constants/Dimensions'
@@ -20,6 +20,7 @@ import AttachmentPreviewFlatListItem from '@/components/AttachmentPreviewFlatLis
 import * as MediaLibrary from 'expo-media-library'
 import showToast from '@/components/Toast'
 import AttachmentUrl from '@/models/AttachmentUrl.model'
+import ChatOptionsModal from '@/components/ChatOptionsModal'
 
 const Chat = () => {
     const limit = 20
@@ -38,6 +39,7 @@ const Chat = () => {
     const [isNearBottom, setIsNearBottom] = useState(true)
     const [counter, setCounter] = useState(0)
     const [isSending, setIsSending] = useState(false)
+    const [optionsModalVisible, setOptionsModalVisible] = useState(false)
 
     const navigation = useNavigation()
     const headerHeight = useHeaderHeight()
@@ -62,6 +64,21 @@ const Chat = () => {
 
     const textColor = colorScheme === 'dark' ? Colors.dark.text : Colors.light.text
     const bubbleBackground = colorScheme === 'dark' ? '#343434' : '#d3d3d3'
+    const options = [
+        <Pressable key={1} onPress={() => onPressOption(() => router.push({
+            pathname: '/(chat)/(attachments)',
+            params: {
+                chatId: id
+            }
+        }))}>
+            <ThemedText>Saved attachments</ThemedText>
+        </Pressable>
+    ]
+
+    const onPressOption = (callback: () => void) => {
+        setOptionsModalVisible(false)
+        callback()
+    }
 
     const handleOnChangeText = (text: string) => {
         setMessage(prev => ({
@@ -153,6 +170,14 @@ const Chat = () => {
         }))
     }
 
+    const handleOnPressOptions = () => {
+        setOptionsModalVisible(true)
+    }
+
+    const onRequestCloseOptionsModal = () => {
+        setOptionsModalVisible(false)
+    }
+
     const fetchMessagesOnEndReached = async () => {
         setIsLoading(true)
 
@@ -189,7 +214,16 @@ const Chat = () => {
                     style={styles.image}
                 />
                 <ThemedText>{chatName}</ThemedText>
-            </>
+            </>,
+            headerRight: () => (
+                <Pressable style={styles.optionsBtn} onPress={handleOnPressOptions}>
+                    <Entypo
+                        name='dots-three-vertical'
+                        color={textColor}
+                        size={20}
+                    />
+                </Pressable>
+            )
         })
 
         socket.emit('chat:joinRoom', id)
@@ -221,6 +255,11 @@ const Chat = () => {
 
     return (
         <ThemedView style={styles.container}>
+            <ChatOptionsModal
+                visible={optionsModalVisible}
+                onRequestClose={onRequestCloseOptionsModal}
+                options={options}
+            />
             <FlatList
                 ref={flatListRef}
                 data={messages}
@@ -334,5 +373,8 @@ const styles = StyleSheet.create({
     },
     previewFlatList: {
         gap: 8
+    },
+    optionsBtn: {
+        padding: 4
     }
 })
