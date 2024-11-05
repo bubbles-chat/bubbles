@@ -50,3 +50,9 @@ export interface AttachmentMessageFlatListItemProps {
     onPressOpen?: () => any
     onPressShare?: () => any
 }
+
+export interface AttachmentScreenFlatListItemProps {
+    uri: string
+    name: string
+    mimeType: string
+}
