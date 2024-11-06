@@ -20,7 +20,7 @@ const Home = () => {
   const [permission, requestPermission] = Notification.usePermissions()
   const headerHeight = useHeaderHeight()
 
-  const isChatsIsChatsArray = (chats: Chat[] | string[]): chats is Chat[] => {
+  const isChatsChatsArray = (chats: Chat[] | string[]): chats is Chat[] => {
     return chats.length > 0 && typeof chats[0] !== 'string'
   }
 
@@ -56,8 +56,8 @@ const Home = () => {
   }
 
   useEffect(() => {
-    const requestNotificationPermission = async () => {      
-      if (permission && !permission?.granted && permission?.canAskAgain) {        
+    const requestNotificationPermission = async () => {
+      if (permission && !permission?.granted && permission?.canAskAgain) {
         setModalVisible(true)
       }
     }
@@ -86,14 +86,14 @@ const Home = () => {
           />
         </View>
       </CustomModal>
-      {(user && isChatsIsChatsArray(user.chats)) && <FlatList
+      {(user && isChatsChatsArray(user.chats)) && <FlatList
         data={user.chats}
         renderItem={({ item }) => <ChatFlatListItem item={item} />}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.flatListContainer}
-        ListEmptyComponent={<ChatListEmptyComponent />}
         ListHeaderComponent={<View style={{ height: headerHeight }} />}
       />}
+      {!user?.chats.length && <ChatListEmptyComponent />}
     </ThemedView>
   )
 }
