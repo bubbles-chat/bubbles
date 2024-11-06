@@ -20,6 +20,21 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
     const textColor = colorScheme === 'dark' ? Colors.dark.icon : Colors.light.icon
     const tintColor = colorScheme === 'dark' ? Colors.dark.tabIconSelected : Colors.light.tabIconSelected
 
+    const fetchLastMessage = async () => {
+        try {
+            if (item.lastMessage) {
+                const response = await getMessage(item.lastMessage as string)
+
+                if (response.status === 200) {
+                    setLastMessage(response.data.message.text)
+                }
+            }
+        } catch (e) {
+            const err = e as AxiosError
+            console.log('ChatListItem:fetchLastMessage:', err.response?.data);
+        }
+    }
+
     if (item.type === 'single') {
         const [otherUser, setOtherUser] = useState<User | undefined>(undefined)
 
@@ -34,21 +49,6 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
             } catch (e) {
                 const err = e as AxiosError
                 console.log('ChatListItem:fetchOtherUser:', err.response?.data);
-            }
-        }
-
-        const fetchLastMessage = async () => {
-            try {
-                if (item.lastMessage) {
-                    const response = await getMessage(item.lastMessage as string)
-
-                    if (response.status === 200) {
-                        setLastMessage(response.data.message.text)
-                    }
-                }
-            } catch (e) {
-                const err = e as AxiosError
-                console.log('ChatListItem:fetchLastMessage:', err.response?.data);
             }
         }
 
@@ -97,13 +97,50 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
             </Pressable>
         )
     } else {
-        return (
-            <Pressable style={styles.container}>
+        useEffect(() => {
+            fetchLastMessage()
 
+            socket.emit('chat:joinRoom', item._id)
+            socket.on('chat:messageAdded', (payload: { chatId: string, message: Message }) => {
+                if (payload.chatId === item._id) {
+                    setLastMessage(payload.message.text)
+                    setCounter(prev => prev + 1)
+                }
+            })
+
+            return () => {
+                socket.emit('chat:leaveRoom', item._id)
+                socket.off('chat:messageAdded')
+            }
+        }, [])
+
+        return (
+            <Pressable style={styles.container} onPress={() => {
+                router.push({
+                    pathname: '/(chat)',
+                    params: {
+                        id: item._id,
+                        type: item.type,
+                        chatName: item.chatName,
+                        photoUrl: item.photoUrl
+                    }
+                })
+                setCounter(0)
+            }}>
+                <Image
+                    source={item.photoUrl.length === 0 ? require('@/assets/images/group-avatar.png') : { uri: item.photoUrl }}
+                    style={styles.image}
+                />
+                <View>
+                    <ThemedText>{item.chatName}</ThemedText>
+                    <Text style={{ color: textColor }} numberOfLines={1}>{lastMessage}</Text>
+                </View>
+                {counter > 0 && <View style={[styles.counterView, { backgroundColor: tintColor }]}>
+                    <Text style={{ color: colorScheme === 'dark' ? '#000' : '#fff' }}>{counter}</Text>
+                </View>}
             </Pressable>
         )
     }
-
 }
 
 export default ChatFlatListItem
