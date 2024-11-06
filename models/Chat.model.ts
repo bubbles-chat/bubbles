@@ -7,4 +7,5 @@ export default interface Chat {
     lastMessage: Message | string
     type: string
     chatName?: string
+    photoUrl: string
 }
