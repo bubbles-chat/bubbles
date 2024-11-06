@@ -25,8 +25,8 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
 
         const fetchOtherUser = async () => {
             try {
-                const filtered = item.participants.filter(id => id !== user?._id)
-                const response = await getUserById(filtered[0] as string)
+                const filtered = item.participants.filter(participant => participant.user !== user?._id)
+                const response = await getUserById(filtered[0].user.toString())
 
                 if (response.status === 200) {
                     setOtherUser(response.data.user)
