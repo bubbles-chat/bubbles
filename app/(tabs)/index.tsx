@@ -1,4 +1,4 @@
-import { FlatList, Platform, StyleSheet, View } from 'react-native'
+import { FlatList, Platform, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { useEffect, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import { useHeaderHeight } from '@react-navigation/elements'
@@ -13,19 +13,34 @@ import { useAppSelector } from '@/hooks/useAppSelector'
 import Chat from '@/models/Chat.model'
 import ChatListEmptyComponent from '@/components/ChatListEmptyComponent'
 import ChatFlatListItem from '@/components/ChatFlatListItem'
+import { AntDesign, Ionicons } from '@expo/vector-icons'
+import { PADDING_HORIZONTAL, PADDING_TOP, TAB_BAR_HEIGHT } from '@/constants/Dimensions'
+import { useThemeColor } from '@/hooks/useThemeColor'
+import CustomTextInput from '@/components/CustomTextInput'
+import { InputState } from '@/types/types'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
+import { createGroupChatAsync } from '@/store/userAsyncThunks'
 
 const Home = () => {
   const { user } = useAppSelector(state => state.user)
-  const [modalVisible, setModalVisible] = useState(false)
+  const dispatch = useAppDispatch()
+  const [notificationModalVisible, setNotificationModalVisible] = useState(false)
+  const [newChatModalVisible, setNewChatModalVisible] = useState(false)
+  const [newChatName, setNewChatName] = useState<InputState>({
+    isFocused: false,
+    value: ''
+  })
   const [permission, requestPermission] = Notification.usePermissions()
   const headerHeight = useHeaderHeight()
+  const textColor = useThemeColor({}, 'text') as string
+  const buttonBackground = useThemeColor({}, 'buttonBackground') as string
 
   const isChatsChatsArray = (chats: Chat[] | string[]): chats is Chat[] => {
     return chats.length > 0 && typeof chats[0] !== 'string'
   }
 
   const handleDeclineOnPress = () => {
-    setModalVisible(false)
+    setNotificationModalVisible(false)
   }
 
   const handleAcceptOnPress = async () => {
@@ -48,17 +63,37 @@ const Home = () => {
         await addToken(token)
       }
 
-      setModalVisible(false)
+      setNotificationModalVisible(false)
     } catch (e) {
       const err = e as AxiosError
       console.error(err.response?.data);
     }
   }
 
+  const handleOnPressAdd = () => {
+    setNewChatModalVisible(true)
+  }
+
+  const onRequestCloseNewChatModal = () => {
+    setNewChatModalVisible(false)
+  }
+
+  const onChangeText = (text: string) => {
+    setNewChatName(prev => ({
+      ...prev,
+      value: text
+    }))
+  }
+
+  const onPressCreate = () => {
+    dispatch(createGroupChatAsync({ chatName: newChatName.value }))
+    setNewChatModalVisible(false)
+  }
+
   useEffect(() => {
     const requestNotificationPermission = async () => {
       if (permission && !permission?.granted && permission?.canAskAgain) {
-        setModalVisible(true)
+        setNotificationModalVisible(true)
       }
     }
 
@@ -67,7 +102,8 @@ const Home = () => {
 
   return (
     <ThemedView style={[styles.contianer]}>
-      <CustomModal visible={modalVisible}>
+      {/* notification permission modal */}
+      <CustomModal visible={notificationModalVisible}>
         <ThemedText style={styles.modalTitle}>Notification Permission required</ThemedText>
         <View style={{ height: 16 }} />
         <ThemedText style={{ textAlign: 'justify' }}>
@@ -86,6 +122,33 @@ const Home = () => {
           />
         </View>
       </CustomModal>
+      {/* new chat modal */}
+      <CustomModal visible={newChatModalVisible} onRequestClose={onRequestCloseNewChatModal}>
+        <ThemedText style={styles.modalTitle}>Create new chat</ThemedText>
+        <View style={styles.separator} />
+        <CustomTextInput
+          state={newChatName}
+          placeholder='Chat name'
+          Icon={<AntDesign
+            name='edit'
+            color={textColor}
+            size={18}
+          />}
+          onChangeText={onChangeText}
+        />
+        <View style={styles.separator} />
+        <View style={styles.rowView}>
+          <CustomButton
+            text='Cancel'
+            hasBackground={false}
+            onPress={onRequestCloseNewChatModal}
+          />
+          <CustomButton
+            text='Create'
+            onPress={onPressCreate}
+          />
+        </View>
+      </CustomModal>
       {(user && isChatsChatsArray(user.chats)) && <FlatList
         data={user.chats}
         renderItem={({ item }) => <ChatFlatListItem item={item} />}
@@ -94,6 +157,16 @@ const Home = () => {
         ListHeaderComponent={<View style={{ height: headerHeight }} />}
       />}
       {!user?.chats.length && <ChatListEmptyComponent />}
+      <TouchableOpacity
+        style={[styles.addBtn, { backgroundColor: buttonBackground }]}
+        onPress={handleOnPressAdd}
+      >
+        <Ionicons
+          name='add'
+          color={textColor}
+          size={50}
+        />
+      </TouchableOpacity>
     </ThemedView>
   )
 }
@@ -112,5 +185,22 @@ const styles = StyleSheet.create({
   },
   flatListContainer: {
     flexGrow: 1
+  },
+  addBtn: {
+    position: 'absolute',
+    bottom: TAB_BAR_HEIGHT + PADDING_TOP,
+    right: PADDING_HORIZONTAL,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 60,
+    elevation: 5
+  },
+  separator: {
+    height: 8
+  },
+  rowView: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%'
   }
 })
