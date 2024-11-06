@@ -20,24 +20,26 @@ const Layout = () => {
     const { setAllAttachments, setAudioAttachments, setOtherAttachments, setPhotoAttachments, setVideoAttachments } = useAttachments()
 
     const loadAttachments = async () => {
-        const files = await FileSystem.readDirectoryAsync(chatPath)
+        if ((await FileSystem.getInfoAsync(chatPath)).exists) {
+            const files = await FileSystem.readDirectoryAsync(chatPath)
 
-        files.forEach(async file => {
-            const mimeType = mime.getType(file) as string
-            const info = await FileSystem.getInfoAsync(`${chatPath}/${file}`)
+            files.forEach(async file => {
+                const mimeType = mime.getType(file) as string
+                const info = await FileSystem.getInfoAsync(`${chatPath}/${file}`)
 
-            setAllAttachments(prev => [...prev, { mimeType, uri: info.uri, name: file }])
+                setAllAttachments(prev => [...prev, { mimeType, uri: info.uri, name: file }])
 
-            if (mimeType?.startsWith('image/')) {
-                setPhotoAttachments(prev => [...prev, { mimeType, uri: info.uri, name: file }])
-            } else if (mimeType?.startsWith('video/')) {
-                setVideoAttachments(prev => [...prev, { mimeType, uri: info.uri, name: file }])
-            } else if (mimeType?.startsWith('audio/')) {
-                setAudioAttachments(prev => [...prev, { mimeType, uri: info.uri, name: file }])
-            } else {
-                setOtherAttachments(prev => [...prev, { mimeType, uri: info.uri, name: file }])
-            }
-        })
+                if (mimeType?.startsWith('image/')) {
+                    setPhotoAttachments(prev => [...prev, { mimeType, uri: info.uri, name: file }])
+                } else if (mimeType?.startsWith('video/')) {
+                    setVideoAttachments(prev => [...prev, { mimeType, uri: info.uri, name: file }])
+                } else if (mimeType?.startsWith('audio/')) {
+                    setAudioAttachments(prev => [...prev, { mimeType, uri: info.uri, name: file }])
+                } else {
+                    setOtherAttachments(prev => [...prev, { mimeType, uri: info.uri, name: file }])
+                }
+            })
+        }
     }
 
     useEffect(() => {
