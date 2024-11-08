@@ -12,3 +12,7 @@ export async function createGroupChat(chatName: string): Promise<AxiosResponse<{
         chatName
     })
 }
+
+export async function addUserToGroupChat(chatId:string, userId: string): Promise<AxiosResponse<{message: string, chat: Chat}>> {
+    return await client.put(`/chat/addUserToGroupChat/${userId}/${chatId}`)
+}
