@@ -1,18 +1,15 @@
 import { useHeaderHeight } from '@react-navigation/elements'
-import { useColorScheme } from 'react-native'
-import { useMemo } from 'react'
-import { Colors } from '@/constants/Colors'
 import MaterialTopTabs from '@/components/navigation/MaterialTopTabs'
 import { StatusBar } from 'expo-status-bar'
+import { useThemeColor } from '@/hooks/useThemeColor'
 
 
 const ConnectionsLayout = () => {
     const headerHeight = useHeaderHeight()
-    const colorScheme = useColorScheme()
-    const background = useMemo(() => colorScheme === 'dark' ? Colors.dark.background : Colors.light.background, [colorScheme])
-    const activeTintColor = useMemo(() => colorScheme === 'dark' ? Colors.dark.tabIconSelected : Colors.light.tabIconSelected, [colorScheme])
-    const inactiveTintColor = useMemo(() => colorScheme === 'dark' ? Colors.dark.tabIconDefault : Colors.light.tabIconDefault, [colorScheme])
-    const indicatorColor = useMemo(() => colorScheme === 'dark' ? Colors.dark.buttonBackground : Colors.light.buttonBackground, [colorScheme])
+    const background = useThemeColor({}, 'background') as string
+    const activeTintColor = useThemeColor({}, 'tabIconSelected') as string
+    const inactiveTintColor = useThemeColor({}, 'tabIconDefault') as string
+    const indicatorColor = useThemeColor({}, 'buttonBackground') as string
 
     return (
         <>
