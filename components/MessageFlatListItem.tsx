@@ -1,4 +1,4 @@
-import { Linking, Pressable, ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native'
+import { Linking, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native'
 import Message from '@/models/Message.model'
 import { useAppSelector } from '@/hooks/useAppSelector'
 import ParsedText, { ParseShape } from 'react-native-parsed-text'
@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { compareDates, getDayName } from '@/utils/date'
 import showToast from './Toast'
 import socket from '@/api/socket'
-import { memo, useState } from 'react'
+import { useState } from 'react'
 import CustomModal from './CustomModal'
 import { ThemedText } from './ThemedText'
 import CustomButton from './CustomButton'
@@ -16,6 +16,7 @@ import CustomTextInput from './CustomTextInput'
 import { InputState } from '@/types/types'
 import AttachmentMessageFlatListItems from './AttachmentMessageFlatListItems'
 import { isUser } from '@/utils/typeChecker'
+import { useThemeColor } from '@/hooks/useThemeColor'
 
 const MessageFlatListItem = ({ item }: { item: Message }) => {
     const { user } = useAppSelector(state => state.user)
@@ -29,8 +30,8 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
         isFocused: false
     })
 
-    const textColor = colorScheme === 'dark' ? Colors.dark.text : Colors.light.text
-    const tint = colorScheme === 'dark' ? Colors.dark.icon : Colors.light.icon
+    const textColor = useThemeColor({}, 'text') as string
+    const tint = useThemeColor({}, 'icon') as string
 
     const today = new Date(); today.setHours(0, 0, 0)
     const previousWeek = new Date(today);
@@ -256,7 +257,7 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
     }
 }
 
-export default memo(MessageFlatListItem)
+export default MessageFlatListItem
 
 const styles = StyleSheet.create({
     container: {
