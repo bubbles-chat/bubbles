@@ -21,10 +21,12 @@ import * as MediaLibrary from 'expo-media-library'
 import showToast from '@/components/Toast'
 import AttachmentUrl from '@/models/AttachmentUrl.model'
 import ChatOptionsModal from '@/components/ChatOptionsModal'
+import Participant from '@/models/Participant.model'
 
 const Chat = () => {
     const limit = 20
     const { id, type, chatName, photoUrl } = useLocalSearchParams()
+    let { participants } = useLocalSearchParams()
     const { user } = useAppSelector(state => state.user)
     const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions()
 
@@ -64,8 +66,8 @@ const Chat = () => {
 
     const textColor = colorScheme === 'dark' ? Colors.dark.text : Colors.light.text
     const bubbleBackground = colorScheme === 'dark' ? '#343434' : '#d3d3d3'
-    const options = [
-        <Pressable key={1} onPress={() => onPressOption(() => router.push({
+    const [options, setOptions] = useState([
+        <Pressable key={1} style={styles.chatOptionsBtns} onPress={() => onPressOption(() => router.push({
             pathname: '/(chat)/(attachments)',
             params: {
                 chatId: id
@@ -73,7 +75,7 @@ const Chat = () => {
         }))}>
             <ThemedText>Saved attachments</ThemedText>
         </Pressable>
-    ]
+    ])
 
     const onPressOption = (callback: () => void) => {
         setOptionsModalVisible(false)
@@ -210,7 +212,10 @@ const Chat = () => {
         navigation.setOptions({
             headerTitle: () => <>
                 <Image
-                    source={photoUrl.length === 0 ? require('@/assets/images/avatar.png') : { uri: photoUrl }}
+                    source={photoUrl.length === 0 ?
+                        type === 'single' ?
+                            require('@/assets/images/avatar.png') : require('@/assets/images/group-avatar.png')
+                        : { uri: photoUrl }}
                     style={styles.image}
                 />
                 <ThemedText>{chatName}</ThemedText>
@@ -226,6 +231,24 @@ const Chat = () => {
             )
         })
 
+        if (type === 'group') {
+            setOptions(prev => [
+                ...prev,
+                <Pressable key={2} style={styles.chatOptionsBtns} onPress={() => onPressOption(() => router.push({
+                    pathname: '/(chat)/participants',
+                    params: {
+                        id,
+                        participants
+                    }
+                }))}>
+                    <ThemedText>participants</ThemedText>
+                </Pressable>,
+                <Pressable key={3} style={styles.chatOptionsBtns}>
+                    <ThemedText style={{ color: 'red' }}>Leave chat</ThemedText>
+                </Pressable>
+            ])
+        }
+
         socket.emit('chat:joinRoom', id)
         socket.on('chat:messageAdded', (payload: { chatId: string, message: Message }) => {
             if (payload.chatId === id) {
@@ -239,6 +262,13 @@ const Chat = () => {
         })
         socket.on('chat:messageEdited', (payload: { text: string, id: string }) => {
             setMessages(prev => prev.map(message => message._id === payload.id ? { ...message, text: payload.text } : message))
+        })
+        socket.on('chat:userAdded', (payload: { chatId: string, participant: Participant }) => {
+            if (payload.chatId === id) {
+                const parts = JSON.parse(participants as string) as Participant[]
+                parts.push(payload.participant)
+                participants = JSON.stringify(parts)
+            }
         })
 
         return () => {
@@ -376,5 +406,8 @@ const styles = StyleSheet.create({
     },
     optionsBtn: {
         padding: 4
+    },
+    chatOptionsBtns: {
+        paddingVertical: 4
     }
 })
