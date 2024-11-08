@@ -323,6 +323,7 @@ const Chat = () => {
                 ref={flatListRef}
                 data={messages}
                 renderItem={({ item }) => <MessageFlatListItem item={item} />}
+                keyExtractor={(item, index) => item._id ?? index.toString()}
                 ListFooterComponent={isLoading ?
                     <>
                         <View style={{ height: headerHeight }} />
