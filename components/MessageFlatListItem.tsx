@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
         maxWidth: '70%',
         padding: 4,
         borderRadius: 10,
-        gap: 8
+        gap: 4
     },
     detectedLinksText: {
         textDecorationLine: 'underline'
