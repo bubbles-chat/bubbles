@@ -1,3 +1,4 @@
+import Message from "@/models/Message.model";
 import Participant from "@/models/Participant.model";
 
 export interface ChatUserAddedPayload {
@@ -10,7 +11,17 @@ export interface ChatUserRemovedPayload {
     userId: string
 }
 
-export interface ChatUserRoleChanged {
+export interface ChatUserRoleChangedPayload {
     chatId: string
     userId: string
+}
+
+export interface ChatMessageAddedPayload {
+    chatId: string
+    message: Message
+}
+
+export interface ChatMessageEditedPayload {
+    text: string
+    id: string
 }
