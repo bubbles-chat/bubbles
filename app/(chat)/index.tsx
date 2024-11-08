@@ -22,6 +22,8 @@ import showToast from '@/components/Toast'
 import AttachmentUrl from '@/models/AttachmentUrl.model'
 import ChatOptionsModal from '@/components/ChatOptionsModal'
 import Participant from '@/models/Participant.model'
+import { isUser } from '@/utils/typeChecker'
+import { ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChanged } from '@/types/socketPayload.type'
 
 const Chat = () => {
     const limit = 20
@@ -263,10 +265,34 @@ const Chat = () => {
         socket.on('chat:messageEdited', (payload: { text: string, id: string }) => {
             setMessages(prev => prev.map(message => message._id === payload.id ? { ...message, text: payload.text } : message))
         })
-        socket.on('chat:userAdded', (payload: { chatId: string, participant: Participant }) => {
+        socket.on('chat:userAdded', (payload: ChatUserAddedPayload) => {
             if (payload.chatId === id) {
                 const parts = JSON.parse(participants as string) as Participant[]
                 parts.push(payload.participant)
+                participants = JSON.stringify(parts)
+            }
+        })
+        socket.on('chat:userRemoved', (payload: ChatUserRemovedPayload) => {
+            if (payload.chatId === id) {
+                const parts = JSON.parse(participants as string) as Participant[]
+                participants = JSON.stringify(parts.filter(participant => {
+                    if (isUser(participant.user)) {
+                        return participant.user._id !== payload.userId
+                    }
+                    return false
+                }))
+            }
+        })
+        socket.on('chat:userRoleChanged', (payload: ChatUserRoleChanged) => {
+            if (payload.chatId === id) {
+                const parts = JSON.parse(participants as string) as Participant[]
+
+                for (let i = 0; i < parts.length; i++) {
+                    const user = parts[i].user
+                    if (isUser(user) && user._id === payload.userId) {
+                        parts[i] = { ...parts[i], isAdmin: true }
+                    }
+                }
                 participants = JSON.stringify(parts)
             }
         })
@@ -276,6 +302,9 @@ const Chat = () => {
             socket.off('chat:messageAdded')
             socket.off('chat:messageDeleted')
             socket.off('chat:messageEdited')
+            socket.off('chat:userAdded')
+            socket.off('chat:userRemoved')
+            socket.off('chat:userRoleChanged')
         }
     }, [])
 
