@@ -1,4 +1,4 @@
-import { FlatList, Platform, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { FlatList, Platform, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { useEffect, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import { useHeaderHeight } from '@react-navigation/elements'
@@ -19,25 +19,26 @@ import { useThemeColor } from '@/hooks/useThemeColor'
 import CustomTextInput from '@/components/CustomTextInput'
 import { InputState } from '@/types/types'
 import { useAppDispatch } from '@/hooks/useAppDispatch'
-import { createGroupChatAsync } from '@/store/userAsyncThunks'
+import { createGroupChatAsync, getUserByEmailAsync } from '@/store/userAsyncThunks'
+import { isChatArray, isUser } from '@/utils/typeChecker'
+import socket from '@/api/socket'
+import { ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChanged } from '@/types/socketPayload.type'
 
 const Home = () => {
   const { user } = useAppSelector(state => state.user)
   const dispatch = useAppDispatch()
+  const [chats, setChats] = useState<Chat[]>(user?.chats as Chat[])
   const [notificationModalVisible, setNotificationModalVisible] = useState(false)
   const [newChatModalVisible, setNewChatModalVisible] = useState(false)
   const [newChatName, setNewChatName] = useState<InputState>({
     isFocused: false,
     value: ''
   })
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [permission, requestPermission] = Notification.usePermissions()
   const headerHeight = useHeaderHeight()
   const textColor = useThemeColor({}, 'text') as string
   const buttonBackground = useThemeColor({}, 'buttonBackground') as string
-
-  const isChatsChatsArray = (chats: Chat[] | string[]): chats is Chat[] => {
-    return chats.length > 0 && typeof chats[0] !== 'string'
-  }
 
   const handleDeclineOnPress = () => {
     setNotificationModalVisible(false)
@@ -90,6 +91,12 @@ const Home = () => {
     setNewChatModalVisible(false)
   }
 
+  const onRefresh = () => {
+    setIsRefreshing(true)
+    dispatch(getUserByEmailAsync({ email: user?.email ?? '' }))
+    setIsRefreshing(false)
+  }
+
   useEffect(() => {
     const requestNotificationPermission = async () => {
       if (permission && !permission?.granted && permission?.canAskAgain) {
@@ -99,6 +106,57 @@ const Home = () => {
 
     requestNotificationPermission()
   }, [permission])
+
+  useEffect(() => {
+    socket.on("chat:userAdded", (payload: ChatUserAddedPayload) => {
+      setChats(prev => prev.map(chat => {
+        if (chat._id === payload.chatId) {
+          return { ...chat, participants: [...chat.participants, payload.participant] }
+        }
+        return chat
+      }))
+    })
+
+    socket.on("chat:userRemoved", (payload: ChatUserRemovedPayload) => {
+      setChats(prev => prev.map(chat => {
+        if (payload.chatId === chat._id) {
+          return {
+            ...chat,
+            participants: chat.participants.filter(participant => {
+              if (isUser(participant.user)) {
+                return participant.user._id !== payload.userId
+              }
+              return false
+            })
+          }
+        }
+        return chat
+      }))
+    })
+
+    socket.on("chat:userRoleChanged", (payload: ChatUserRoleChanged) => {
+      setChats(prev => prev.map(chat => {
+        if (chat._id === payload.chatId) {
+          return {
+            ...chat,
+            participants: chat.participants.map(participant => {
+              if ((isUser(participant.user) && participant.user._id === payload.userId) || participant.user === payload.userId) {
+                return { ...participant, isAdmin: true }
+              }
+              return participant
+            })
+          }
+        }
+        return chat
+      }))
+    })
+
+    return () => {
+      socket.off('chat:userAdded')
+      socket.off('chat:userRemoved')
+      socket.off('chat:userRoleChanged')
+    }
+  }, [])
 
   return (
     <ThemedView style={[styles.contianer]}>
@@ -149,12 +207,13 @@ const Home = () => {
           />
         </View>
       </CustomModal>
-      {(user && isChatsChatsArray(user.chats)) && <FlatList
-        data={user.chats}
+      {(user && isChatArray(chats)) && <FlatList
+        data={chats}
         renderItem={({ item }) => <ChatFlatListItem item={item} />}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.flatListContainer}
         ListHeaderComponent={<View style={{ height: headerHeight }} />}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       />}
       {!user?.chats.length && <ChatListEmptyComponent />}
       <TouchableOpacity
