@@ -11,6 +11,7 @@ import { router } from 'expo-router'
 import { getMessage } from '@/api/messageApi'
 import socket from '@/api/socket'
 import Message from '@/models/Message.model'
+import { isUser } from '@/utils/typeChecker'
 
 const ChatFlatListItem = ({ item }: { item: Chat }) => {
     const { user } = useAppSelector(state => state.user)
@@ -41,10 +42,12 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
         const fetchOtherUser = async () => {
             try {
                 const filtered = item.participants.filter(participant => participant.user !== user?._id)
-                const response = await getUserById(filtered[0].user.toString())
+                if (isUser(filtered[0].user)) {
+                    const response = await getUserById(filtered[0].user._id)
 
-                if (response.status === 200) {
-                    setOtherUser(response.data.user)
+                    if (response.status === 200) {
+                        setOtherUser(response.data.user)
+                    }
                 }
             } catch (e) {
                 const err = e as AxiosError
@@ -122,7 +125,8 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
                         id: item._id,
                         type: item.type,
                         chatName: item.chatName,
-                        photoUrl: item.photoUrl
+                        photoUrl: item.photoUrl,
+                        participants: JSON.stringify(item.participants)
                     }
                 })
                 setCounter(0)
