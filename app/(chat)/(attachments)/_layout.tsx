@@ -7,6 +7,7 @@ import { useColorScheme } from 'react-native'
 import * as FileSystem from 'expo-file-system'
 import mime from 'mime'
 import { AttachmentsProvider, useAttachments } from '@/context/AttachmentsContext'
+import { StatusBar } from 'expo-status-bar'
 
 const Layout = () => {
     const { chatId } = useLocalSearchParams()
@@ -47,35 +48,38 @@ const Layout = () => {
     }, [])
 
     return (
-        <MaterialTopTabs
-            screenOptions={{
-                tabBarStyle: {
-                    top: headerHeight,
-                    backgroundColor: background,
-                    position: 'absolute',
-                    height: 50,
-                    width: '100%',
-                    borderBottomLeftRadius: 16,
-                    borderBottomRightRadius: 16,
-                    overflow: 'hidden'
-                },
-                tabBarActiveTintColor: activeTintColor,
-                tabBarInactiveTintColor: inactiveTintColor,
-                tabBarIndicatorStyle: {
-                    backgroundColor: indicatorColor,
-                    height: 4
-                },
-                tabBarLabelStyle: {
-                    textTransform: 'capitalize'
-                }
-            }}
-        >
-            <MaterialTopTabs.Screen name='index' options={{ title: "All" }} />
-            <MaterialTopTabs.Screen name='photos' />
-            <MaterialTopTabs.Screen name='videos' />
-            <MaterialTopTabs.Screen name='audio' />
-            <MaterialTopTabs.Screen name='other' />
-        </MaterialTopTabs>
+        <>
+            <MaterialTopTabs
+                screenOptions={{
+                    tabBarStyle: {
+                        top: headerHeight,
+                        backgroundColor: background,
+                        position: 'absolute',
+                        height: 50,
+                        width: '100%',
+                        borderBottomLeftRadius: 16,
+                        borderBottomRightRadius: 16,
+                        overflow: 'hidden'
+                    },
+                    tabBarActiveTintColor: activeTintColor,
+                    tabBarInactiveTintColor: inactiveTintColor,
+                    tabBarIndicatorStyle: {
+                        backgroundColor: indicatorColor,
+                        height: 4
+                    },
+                    tabBarLabelStyle: {
+                        textTransform: 'capitalize'
+                    }
+                }}
+            >
+                <MaterialTopTabs.Screen name='index' options={{ title: "All" }} />
+                <MaterialTopTabs.Screen name='photos' />
+                <MaterialTopTabs.Screen name='videos' />
+                <MaterialTopTabs.Screen name='audio' />
+                <MaterialTopTabs.Screen name='other' />
+            </MaterialTopTabs>
+            <StatusBar backgroundColor='transparent' />
+        </>
     )
 }
 

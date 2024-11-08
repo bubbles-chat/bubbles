@@ -3,6 +3,7 @@ import { useColorScheme } from 'react-native'
 import { useMemo } from 'react'
 import { Colors } from '@/constants/Colors'
 import MaterialTopTabs from '@/components/navigation/MaterialTopTabs'
+import { StatusBar } from 'expo-status-bar'
 
 
 const ConnectionsLayout = () => {
@@ -14,33 +15,36 @@ const ConnectionsLayout = () => {
     const indicatorColor = useMemo(() => colorScheme === 'dark' ? Colors.dark.buttonBackground : Colors.light.buttonBackground, [colorScheme])
 
     return (
-        <MaterialTopTabs
-            screenOptions={{
-                tabBarStyle: {
-                    top: headerHeight,
-                    backgroundColor: background,
-                    position: 'absolute',
-                    height: 50,
-                    width: '100%',
-                    borderBottomLeftRadius: 16,
-                    borderBottomRightRadius: 16,
-                    overflow: 'hidden'
-                },
-                tabBarActiveTintColor: activeTintColor,
-                tabBarInactiveTintColor: inactiveTintColor,
-                tabBarIndicatorStyle: {
-                    backgroundColor: indicatorColor,
-                    height: 4
-                },
-                tabBarLabelStyle: {
-                    textTransform: 'capitalize'
-                }
-            }}
-        >
-            <MaterialTopTabs.Screen name='index' options={{ title: 'Connections' }} />
-            <MaterialTopTabs.Screen name='pendingRequests' options={{ title: 'Pending' }} />
-            <MaterialTopTabs.Screen name='sentRequests' options={{ title: 'Sent' }} />
-        </MaterialTopTabs>
+        <>
+            <MaterialTopTabs
+                screenOptions={{
+                    tabBarStyle: {
+                        top: headerHeight,
+                        backgroundColor: background,
+                        position: 'absolute',
+                        height: 50,
+                        width: '100%',
+                        borderBottomLeftRadius: 16,
+                        borderBottomRightRadius: 16,
+                        overflow: 'hidden'
+                    },
+                    tabBarActiveTintColor: activeTintColor,
+                    tabBarInactiveTintColor: inactiveTintColor,
+                    tabBarIndicatorStyle: {
+                        backgroundColor: indicatorColor,
+                        height: 4
+                    },
+                    tabBarLabelStyle: {
+                        textTransform: 'capitalize'
+                    }
+                }}
+            >
+                <MaterialTopTabs.Screen name='index' options={{ title: 'Connections' }} />
+                <MaterialTopTabs.Screen name='pendingRequests' options={{ title: 'Pending' }} />
+                <MaterialTopTabs.Screen name='sentRequests' options={{ title: 'Sent' }} />
+            </MaterialTopTabs>
+            <StatusBar backgroundColor='transparent' />
+        </>
     )
 }
 

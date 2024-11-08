@@ -8,6 +8,7 @@ import { getUserByEmailAsync } from "@/store/userAsyncThunks";
 import { updateAuthHeaders } from "@/utils/jwt";
 import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { Stack, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { RootSiblingParent } from "react-native-root-siblings";
@@ -74,6 +75,7 @@ export default function Layout() {
       <RootSiblingParent>
         <Provider store={store}>
           <RootLayout />
+          <StatusBar backgroundColor="transparent" />
         </Provider>
       </RootSiblingParent>
     </KeyboardProvider>
