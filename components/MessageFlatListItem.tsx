@@ -15,6 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons'
 import CustomTextInput from './CustomTextInput'
 import { InputState } from '@/types/types'
 import AttachmentMessageFlatListItems from './AttachmentMessageFlatListItems'
+import { isUser } from '@/utils/typeChecker'
 
 const MessageFlatListItem = ({ item }: { item: Message }) => {
     const { user } = useAppSelector(state => state.user)
@@ -137,7 +138,7 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
         }
     ]
 
-    if (user?._id === item.sender) {
+    if (isUser(item.sender) && user?._id === item.sender._id) {
         const gradient = colorScheme === 'dark' ? Colors.dark.gradient.filter(color => color !== '#000') : Colors.light.gradient
 
         return (
@@ -216,6 +217,7 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
                     start={{ x: 0, y: 1 }}
                     end={{ x: 1, y: 0 }}
                 >
+                    <ThemedText style={[styles.senderName, { color: tint }]}>you</ThemedText>
                     {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems
                         item={attachment}
                         key={attachment.url}
@@ -236,6 +238,7 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
 
         return (
             <View style={[styles.container, { backgroundColor: bubbleBackground, alignSelf: 'flex-start' }]}>
+                {isUser(item.sender) && <ThemedText style={[styles.senderName, { color: tint }]}>{item.sender.displayName}</ThemedText>}
                 {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems
                     item={attachment}
                     key={attachment.url}
@@ -258,7 +261,7 @@ export default memo(MessageFlatListItem)
 const styles = StyleSheet.create({
     container: {
         maxWidth: '70%',
-        padding: 8,
+        padding: 4,
         borderRadius: 10,
         gap: 8
     },
@@ -288,5 +291,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 8,
         alignSelf: 'flex-start'
+    },
+    senderName: {
+        fontWeight: 'bold',
+        fontSize: 12
     }
 })
