@@ -1,8 +1,8 @@
 import { StyleSheet, useColorScheme } from 'react-native'
-import { BlurView } from 'expo-blur'
+import { BlurView, BlurViewProps } from 'expo-blur'
 import { useThemeColor } from '@/hooks/useThemeColor'
 
-const BlurViewContainer = ({ enabled }: { enabled?: boolean }) => {
+const BlurViewContainer = ({ enabled, children }: { enabled?: boolean } & BlurViewProps) => {
     const colorScheme = useColorScheme()
     const backgroundColor = enabled ? undefined : useThemeColor({}, 'background') as string
 
@@ -13,6 +13,7 @@ const BlurViewContainer = ({ enabled }: { enabled?: boolean }) => {
             tint={colorScheme === 'dark' ? 'dark' : 'light'}
             blurReductionFactor={4}
             experimentalBlurMethod={enabled ? 'dimezisBlurView' : 'none'}
+            children={children}
         />
     )
 }
