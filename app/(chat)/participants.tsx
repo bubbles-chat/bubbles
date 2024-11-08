@@ -20,7 +20,7 @@ import { AxiosError } from 'axios'
 import showToast from '@/components/Toast'
 import { addUserToGroupChat, makeParticipantAnAdmin, removeParticipantFromGroupChat } from '@/api/chatApi'
 import socket from '@/api/socket'
-import { ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChanged } from '@/types/socketPayload.type'
+import { ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload } from '@/types/socketPayload.type'
 
 const Participants = () => {
     const { user } = useAppSelector(state => state.user)
@@ -129,7 +129,7 @@ const Participants = () => {
                 }))
             }
         })
-        socket.on('chat:userRoleChanged', (payload: ChatUserRoleChanged) => {
+        socket.on('chat:userRoleChanged', (payload: ChatUserRoleChangedPayload) => {
             if (payload.chatId === id) {
                 setUsers(prev => prev.map(user => {
                     if ((isUser(user.user) && user.user._id === payload.userId) || user.user === payload.userId) {

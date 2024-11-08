@@ -22,7 +22,7 @@ import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { createGroupChatAsync, getUserByEmailAsync } from '@/store/userAsyncThunks'
 import { isChatArray, isUser } from '@/utils/typeChecker'
 import socket from '@/api/socket'
-import { ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChanged } from '@/types/socketPayload.type'
+import { ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload } from '@/types/socketPayload.type'
 
 const Home = () => {
   const { user } = useAppSelector(state => state.user)
@@ -134,7 +134,7 @@ const Home = () => {
       }))
     })
 
-    socket.on("chat:userRoleChanged", (payload: ChatUserRoleChanged) => {
+    socket.on("chat:userRoleChanged", (payload: ChatUserRoleChangedPayload) => {
       setChats(prev => prev.map(chat => {
         if (chat._id === payload.chatId) {
           return {

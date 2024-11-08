@@ -23,7 +23,7 @@ import AttachmentUrl from '@/models/AttachmentUrl.model'
 import ChatOptionsModal from '@/components/ChatOptionsModal'
 import Participant from '@/models/Participant.model'
 import { isUser } from '@/utils/typeChecker'
-import { ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChanged } from '@/types/socketPayload.type'
+import { ChatMessageAddedPayload, ChatMessageEditedPayload, ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload } from '@/types/socketPayload.type'
 
 const Chat = () => {
     const limit = 20
@@ -252,7 +252,7 @@ const Chat = () => {
         }
 
         socket.emit('chat:joinRoom', id)
-        socket.on('chat:messageAdded', (payload: { chatId: string, message: Message }) => {
+        socket.on('chat:messageAdded', (payload: ChatMessageAddedPayload) => {
             if (payload.chatId === id) {
                 setMessages(prev => [payload.message, ...prev])
                 setCounter(prev => prev + 1)
@@ -262,7 +262,7 @@ const Chat = () => {
             setMessages(prev => prev.filter(message => message._id !== payload))
             setCounter(prev => prev > 0 ? prev - 1 : prev)
         })
-        socket.on('chat:messageEdited', (payload: { text: string, id: string }) => {
+        socket.on('chat:messageEdited', (payload: ChatMessageEditedPayload) => {
             setMessages(prev => prev.map(message => message._id === payload.id ? { ...message, text: payload.text } : message))
         })
         socket.on('chat:userAdded', (payload: ChatUserAddedPayload) => {
@@ -283,7 +283,7 @@ const Chat = () => {
                 }))
             }
         })
-        socket.on('chat:userRoleChanged', (payload: ChatUserRoleChanged) => {
+        socket.on('chat:userRoleChanged', (payload: ChatUserRoleChangedPayload) => {
             if (payload.chatId === id) {
                 const parts = JSON.parse(participants as string) as Participant[]
 

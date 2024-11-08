@@ -12,6 +12,7 @@ import { getMessage } from '@/api/messageApi'
 import socket from '@/api/socket'
 import Message from '@/models/Message.model'
 import { isUser } from '@/utils/typeChecker'
+import { ChatMessageAddedPayload } from '@/types/socketPayload.type'
 
 const ChatFlatListItem = ({ item }: { item: Chat }) => {
     const { user } = useAppSelector(state => state.user)
@@ -60,7 +61,7 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
             fetchLastMessage()
 
             socket.emit('chat:joinRoom', item._id)
-            socket.on('chat:messageAdded', (payload: { chatId: string, message: Message }) => {
+            socket.on('chat:messageAdded', (payload: ChatMessageAddedPayload) => {
                 if (payload.chatId === item._id) {
                     setLastMessage(payload.message.text)
                     setCounter(prev => prev + 1)
@@ -104,7 +105,7 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
             fetchLastMessage()
 
             socket.emit('chat:joinRoom', item._id)
-            socket.on('chat:messageAdded', (payload: { chatId: string, message: Message }) => {
+            socket.on('chat:messageAdded', (payload: ChatMessageAddedPayload) => {
                 if (payload.chatId === item._id) {
                     setLastMessage(payload.message.text)
                     setCounter(prev => prev + 1)
