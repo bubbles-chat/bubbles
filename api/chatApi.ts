@@ -29,3 +29,13 @@ export async function removeParticipantFromGroupChat(chatId: string, userId: str
     await updateAuthHeaders()
     return await client.put(`/chat/removeParticipant/${userId}/${chatId}`)
 }
+
+export async function makeParticipantAnAdmin(chatId: string, userId: string): Promise<
+    AxiosResponse<{
+        message: string,
+        chat: Chat
+    }>
+> {
+    await updateAuthHeaders()
+    return await client.put(`/chat/changeParticipantRoleToAdmin/${userId}/${chatId}`)
+}
