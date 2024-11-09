@@ -10,9 +10,9 @@ import { Colors } from '@/constants/Colors'
 import { router } from 'expo-router'
 import { getMessage } from '@/api/messageApi'
 import socket from '@/api/socket'
-import Message from '@/models/Message.model'
 import { isUser } from '@/utils/typeChecker'
 import { ChatMessageAddedPayload } from '@/types/socketPayload.type'
+import { useIsFocused } from '@react-navigation/native'
 
 const ChatFlatListItem = ({ item }: { item: Chat }) => {
     const { user } = useAppSelector(state => state.user)
@@ -21,21 +21,43 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
     const colorScheme = useColorScheme()
     const textColor = colorScheme === 'dark' ? Colors.dark.icon : Colors.light.icon
     const tintColor = colorScheme === 'dark' ? Colors.dark.tabIconSelected : Colors.light.tabIconSelected
+    const isFocused = useIsFocused()
 
-    const fetchLastMessage = async () => {
-        try {
-            if (item.lastMessage) {
-                const response = await getMessage(item.lastMessage as string)
+    useEffect(() => {
+        const fetchLastMessage = async () => {
+            try {
+                if (item.lastMessage) {
+                    const response = await getMessage(item.lastMessage as string)
+                    if (response.status === 200) {
+                        setLastMessage(response.data.message.text)
+                    }
+                }
+            } catch (e) {
+                const err = e as AxiosError
+                console.log('ChatListItem:fetchLastMessage:', err.response?.data)
+            }
+        }
 
-                if (response.status === 200) {
-                    setLastMessage(response.data.message.text)
+        fetchLastMessage()
+    }, [])
+
+    useEffect(() => {
+        if (isFocused) {
+            const chatMessageAddedListener = (payload: ChatMessageAddedPayload) => {
+                if (payload.chatId === item._id) {
+                    setLastMessage(payload.message.text)
+                    setCounter(prev => prev + 1)
                 }
             }
-        } catch (e) {
-            const err = e as AxiosError
-            console.log('ChatListItem:fetchLastMessage:', err.response?.data);
+
+            socket.emit('chat:joinRoom', item._id)
+            socket.on('chat:messageAdded', chatMessageAddedListener)
+
+            return () => {
+                socket.off('chat:messageAdded', chatMessageAddedListener)
+            }
         }
-    }
+    }, [isFocused])
 
     if (item.type === 'single') {
         const [otherUser, setOtherUser] = useState<User | undefined>(undefined)
@@ -58,20 +80,6 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
 
         useEffect(() => {
             fetchOtherUser()
-            fetchLastMessage()
-
-            socket.emit('chat:joinRoom', item._id)
-            socket.on('chat:messageAdded', (payload: ChatMessageAddedPayload) => {
-                if (payload.chatId === item._id) {
-                    setLastMessage(payload.message.text)
-                    setCounter(prev => prev + 1)
-                }
-            })
-
-            return () => {
-                socket.emit('chat:leaveRoom', item._id)
-                socket.off('chat:messageAdded')
-            }
         }, [])
 
         return (
@@ -101,23 +109,6 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
             </Pressable>
         )
     } else {
-        useEffect(() => {
-            fetchLastMessage()
-
-            socket.emit('chat:joinRoom', item._id)
-            socket.on('chat:messageAdded', (payload: ChatMessageAddedPayload) => {
-                if (payload.chatId === item._id) {
-                    setLastMessage(payload.message.text)
-                    setCounter(prev => prev + 1)
-                }
-            })
-
-            return () => {
-                socket.emit('chat:leaveRoom', item._id)
-                socket.off('chat:messageAdded')
-            }
-        }, [])
-
         return (
             <Pressable style={styles.container} onPress={() => {
                 router.push({
