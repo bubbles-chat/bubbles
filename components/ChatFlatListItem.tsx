@@ -11,7 +11,7 @@ import { router } from 'expo-router'
 import { getMessage } from '@/api/messageApi'
 import socket from '@/api/socket'
 import { isUser } from '@/utils/typeChecker'
-import { ChatMessageAddedPayload } from '@/types/socketPayload.type'
+import { ChatMessageAddedPayload, ChatPhotoUpdatedPayload } from '@/types/socketPayload.type'
 import { useIsFocused } from '@react-navigation/native'
 
 const ChatFlatListItem = ({ item }: { item: Chat }) => {
@@ -109,6 +109,22 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
             </Pressable>
         )
     } else {
+        const [chatPhoto, setChatPhoto] = useState(item.photoUrl)
+
+        useEffect(() => {
+            const chatPhotoUpdatedListener = (payload: ChatPhotoUpdatedPayload) => {
+                if (payload.chatId === item._id) {
+                    setChatPhoto(payload.url)
+                }
+            }
+
+            socket.on('chat:photoUpdated', chatPhotoUpdatedListener)
+
+            return () => {
+                socket.off('chat:photoUpdated', chatPhotoUpdatedListener)
+            }
+        }, [])
+
         return (
             <Pressable style={styles.container} onPress={() => {
                 router.push({
@@ -124,7 +140,7 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
                 setCounter(0)
             }}>
                 <Image
-                    source={item.photoUrl.length === 0 ? require('@/assets/images/group-avatar.png') : { uri: item.photoUrl }}
+                    source={chatPhoto.length === 0 ? require('@/assets/images/group-avatar.png') : { uri: chatPhoto }}
                     style={styles.image}
                 />
                 <View>
