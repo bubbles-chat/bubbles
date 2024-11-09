@@ -25,3 +25,8 @@ export interface ChatMessageEditedPayload {
     text: string
     id: string
 }
+
+export interface ChatPhotoUpdatedPayload {
+    chatId: string
+    url: string
+}
