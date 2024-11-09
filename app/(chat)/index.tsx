@@ -23,7 +23,10 @@ import AttachmentUrl from '@/models/AttachmentUrl.model'
 import ChatOptionsModal from '@/components/ChatOptionsModal'
 import Participant from '@/models/Participant.model'
 import { isUser } from '@/utils/typeChecker'
-import { ChatMessageAddedPayload, ChatMessageEditedPayload, ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload } from '@/types/socketPayload.type'
+import { ChatMessageAddedPayload, ChatMessageEditedPayload, ChatPhotoUpdatedPayload, ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload } from '@/types/socketPayload.type'
+import CustomModal from '@/components/CustomModal'
+import CustomButton from '@/components/CustomButton'
+import { changeGroupChatPhoto } from '@/api/chatApi'
 
 const Chat = () => {
     const limit = 20
@@ -44,6 +47,9 @@ const Chat = () => {
     const [counter, setCounter] = useState(0)
     const [isSending, setIsSending] = useState(false)
     const [optionsModalVisible, setOptionsModalVisible] = useState(false)
+    const [chatPhoto, setChatPhoto] = useState<DocumentPicker.DocumentPickerAsset | null>(null)
+    const [confirmPhotoModalVisible, setConfirmPhotoModalVisible] = useState(false)
+    const [headerPhotoUrl, setHeaderPhotoUrl] = useState<string>(photoUrl as string)
 
     const navigation = useNavigation()
     const headerHeight = useHeaderHeight()
@@ -210,18 +216,48 @@ const Chat = () => {
         }
     }
 
+    const onPressChangePhoto = async () => {
+        const result = await DocumentPicker.getDocumentAsync({
+            type: 'image/*',
+            multiple: false
+        })
+
+        if (!result.canceled) {
+            setChatPhoto(result.assets[0])
+            setConfirmPhotoModalVisible(true)
+            setOptionsModalVisible(false)
+        }
+    }
+
+    const onRequestCloseConfirmPhotoModal = () => {
+        setConfirmPhotoModalVisible(false)
+        setChatPhoto(null)
+    }
+
+    const onPressYesConfirmPhoto = async () => {
+        setIsLoading(true)
+        try {
+            const data = new FormData()
+
+            data.append('file', {
+                uri: chatPhoto?.uri,
+                name: chatPhoto?.name,
+                type: chatPhoto?.mimeType
+            } as any)
+            await changeGroupChatPhoto(data, id as string)
+            setConfirmPhotoModalVisible(false)
+            showToast("Group chat photo updated")
+        } catch (e) {
+            const err = e as AxiosError
+            console.log('onPressYesConfirmPhoto:', err.response?.data)
+            showToast("Couldn't change group photo")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     useEffect(() => {
         navigation.setOptions({
-            headerTitle: () => <>
-                <Image
-                    source={photoUrl.length === 0 ?
-                        type === 'single' ?
-                            require('@/assets/images/avatar.png') : require('@/assets/images/group-avatar.png')
-                        : { uri: photoUrl }}
-                    style={styles.image}
-                />
-                <ThemedText>{chatName}</ThemedText>
-            </>,
             headerRight: () => (
                 <Pressable style={styles.optionsBtn} onPress={handleOnPressOptions}>
                     <Entypo
@@ -234,9 +270,26 @@ const Chat = () => {
         })
 
         if (type === 'group') {
+            const parts = JSON.parse(participants as string) as Participant[]
+            const currentParticipant = parts.filter(part => {
+                if (isUser(part.user)) {
+                    return part.user._id === user?._id
+                }
+                return false
+            })
+
+            if (currentParticipant[0].isAdmin) {
+                setOptions(prev => [
+                    ...prev,
+                    <Pressable style={styles.chatOptionsBtns} onPress={onPressChangePhoto}>
+                        <ThemedText>change photo</ThemedText>
+                    </Pressable>
+                ])
+            }
+
             setOptions(prev => [
                 ...prev,
-                <Pressable key={2} style={styles.chatOptionsBtns} onPress={() => onPressOption(() => router.push({
+                <Pressable style={styles.chatOptionsBtns} onPress={() => onPressOption(() => router.push({
                     pathname: '/(chat)/participants',
                     params: {
                         id,
@@ -245,18 +298,12 @@ const Chat = () => {
                 }))}>
                     <ThemedText>participants</ThemedText>
                 </Pressable>,
-                <Pressable key={3} style={styles.chatOptionsBtns}>
+                <Pressable style={styles.chatOptionsBtns}>
                     <ThemedText style={{ color: 'red' }}>Leave chat</ThemedText>
                 </Pressable>
             ])
         }
-    }, [])
 
-    useEffect(() => {
-        scrollToBottomOpacity.value = withTiming(isNearBottom ? 0 : 1, { duration: 300 })
-    }, [isNearBottom])
-
-    useEffect(() => {
         const chatMessageAddedListener = (payload: ChatMessageAddedPayload) => {
             if (payload.chatId === id) {
                 setMessages(prev => [payload.message, ...prev])
@@ -301,6 +348,11 @@ const Chat = () => {
                 participants = JSON.stringify(parts)
             }
         }
+        const chatPhotoUpdatedListener = (payload: ChatPhotoUpdatedPayload) => {
+            if (payload.chatId === id) {
+                setHeaderPhotoUrl(payload.url)
+            }
+        }
 
         socket.emit('chat:joinRoom', id)
         socket.on('chat:messageAdded', chatMessageAddedListener)
@@ -309,6 +361,7 @@ const Chat = () => {
         socket.on('chat:userAdded', chatUserAddedListener)
         socket.on('chat:userRemoved', chatUserRemovedListener)
         socket.on('chat:userRoleChanged', chatUserRoleChangedListener)
+        socket.on('chat:photoUpdated', chatPhotoUpdatedListener)
 
         return () => {
             socket.off('chat:messageAdded', chatMessageAddedListener)
@@ -317,8 +370,28 @@ const Chat = () => {
             socket.off('chat:userAdded', chatUserAddedListener)
             socket.off('chat:userRemoved', chatUserRemovedListener)
             socket.off('chat:userRoleChanged', chatUserRoleChangedListener)
+            socket.off('chat:photoUpdated', chatPhotoUpdatedListener)
         }
     }, [])
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerTitle: () => <>
+                <Image
+                    source={headerPhotoUrl.length === 0 ?
+                        type === 'single' ?
+                            require('@/assets/images/avatar.png') : require('@/assets/images/group-avatar.png')
+                        : { uri: headerPhotoUrl }}
+                    style={styles.image}
+                />
+                <ThemedText>{chatName}</ThemedText>
+            </>
+        })
+    }, [headerPhotoUrl])
+
+    useEffect(() => {
+        scrollToBottomOpacity.value = withTiming(isNearBottom ? 0 : 1, { duration: 300 })
+    }, [isNearBottom])
 
     return (
         <ThemedView style={styles.container}>
@@ -327,6 +400,26 @@ const Chat = () => {
                 onRequestClose={onRequestCloseOptionsModal}
                 options={options}
             />
+            <CustomModal visible={confirmPhotoModalVisible} onRequestClose={onRequestCloseConfirmPhotoModal}>
+                <View style={{ gap: 8, alignItems: 'center' }}>
+                    <ThemedText>Would you like to set the following photo as a group photo?</ThemedText>
+                    <Image
+                        style={{ width: 100, height: 100, borderRadius: 100 }}
+                        source={{ uri: chatPhoto?.uri }}
+                    />
+                    {isLoading ? <ActivityIndicator size={'large'} /> : <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <CustomButton
+                            text='No'
+                            hasBackground={false}
+                            onPress={onRequestCloseConfirmPhotoModal}
+                        />
+                        <CustomButton
+                            text='Yes'
+                            onPress={onPressYesConfirmPhoto}
+                        />
+                    </View>}
+                </View>
+            </CustomModal>
             <FlatList
                 ref={flatListRef}
                 data={messages}
