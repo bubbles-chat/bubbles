@@ -250,29 +250,34 @@ const Chat = () => {
                 </Pressable>
             ])
         }
+    }, [])
 
-        socket.emit('chat:joinRoom', id)
-        socket.on('chat:messageAdded', (payload: ChatMessageAddedPayload) => {
+    useEffect(() => {
+        scrollToBottomOpacity.value = withTiming(isNearBottom ? 0 : 1, { duration: 300 })
+    }, [isNearBottom])
+
+    useEffect(() => {
+        const chatMessageAddedListener = (payload: ChatMessageAddedPayload) => {
             if (payload.chatId === id) {
                 setMessages(prev => [payload.message, ...prev])
                 setCounter(prev => prev + 1)
             }
-        })
-        socket.on('chat:messageDeleted', (payload: string) => {
+        }
+        const chatMessageDeletedListener = (payload: string) => {
             setMessages(prev => prev.filter(message => message._id !== payload))
             setCounter(prev => prev > 0 ? prev - 1 : prev)
-        })
-        socket.on('chat:messageEdited', (payload: ChatMessageEditedPayload) => {
+        }
+        const chatMessageEditedListener = (payload: ChatMessageEditedPayload) => {
             setMessages(prev => prev.map(message => message._id === payload.id ? { ...message, text: payload.text } : message))
-        })
-        socket.on('chat:userAdded', (payload: ChatUserAddedPayload) => {
+        }
+        const chatUserAddedListener = (payload: ChatUserAddedPayload) => {
             if (payload.chatId === id) {
                 const parts = JSON.parse(participants as string) as Participant[]
                 parts.push(payload.participant)
                 participants = JSON.stringify(parts)
             }
-        })
-        socket.on('chat:userRemoved', (payload: ChatUserRemovedPayload) => {
+        }
+        const chatUserRemovedListener = (payload: ChatUserRemovedPayload) => {
             if (payload.chatId === id) {
                 const parts = JSON.parse(participants as string) as Participant[]
                 participants = JSON.stringify(parts.filter(participant => {
@@ -282,8 +287,8 @@ const Chat = () => {
                     return false
                 }))
             }
-        })
-        socket.on('chat:userRoleChanged', (payload: ChatUserRoleChangedPayload) => {
+        }
+        const chatUserRoleChangedListener = (payload: ChatUserRoleChangedPayload) => {
             if (payload.chatId === id) {
                 const parts = JSON.parse(participants as string) as Participant[]
 
@@ -295,22 +300,25 @@ const Chat = () => {
                 }
                 participants = JSON.stringify(parts)
             }
-        })
+        }
+
+        socket.emit('chat:joinRoom', id)
+        socket.on('chat:messageAdded', chatMessageAddedListener)
+        socket.on('chat:messageDeleted', chatMessageDeletedListener)
+        socket.on('chat:messageEdited', chatMessageEditedListener)
+        socket.on('chat:userAdded', chatUserAddedListener)
+        socket.on('chat:userRemoved', chatUserRemovedListener)
+        socket.on('chat:userRoleChanged', chatUserRoleChangedListener)
 
         return () => {
-            socket.emit('chat:leaveRoom', id)
-            socket.off('chat:messageAdded')
-            socket.off('chat:messageDeleted')
-            socket.off('chat:messageEdited')
-            socket.off('chat:userAdded')
-            socket.off('chat:userRemoved')
-            socket.off('chat:userRoleChanged')
+            socket.off('chat:messageAdded', chatMessageAddedListener)
+            socket.off('chat:messageDeleted', chatMessageDeletedListener)
+            socket.off('chat:messageEdited', chatMessageEditedListener)
+            socket.off('chat:userAdded', chatUserAddedListener)
+            socket.off('chat:userRemoved', chatUserRemovedListener)
+            socket.off('chat:userRoleChanged', chatUserRoleChangedListener)
         }
     }, [])
-
-    useEffect(() => {
-        scrollToBottomOpacity.value = withTiming(isNearBottom ? 0 : 1, { duration: 300 })
-    }, [isNearBottom])
 
     return (
         <ThemedView style={styles.container}>

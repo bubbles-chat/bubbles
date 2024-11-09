@@ -21,6 +21,7 @@ import showToast from '@/components/Toast'
 import { addUserToGroupChat, makeParticipantAnAdmin, removeParticipantFromGroupChat } from '@/api/chatApi'
 import socket from '@/api/socket'
 import { ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload } from '@/types/socketPayload.type'
+import AddParticipantListEmptyComponent from '@/components/AddParticipantListEmptyComponent'
 
 const Participants = () => {
     const { user } = useAppSelector(state => state.user)
@@ -107,19 +108,18 @@ const Participants = () => {
                 return false
             })
 
-            setIsCurrentUserAnAdmin(currentParticipant[0].isAdmin ?? false)
+            if (currentParticipant.length > 0) {
+                setIsCurrentUserAnAdmin(currentParticipant[0].isAdmin ?? false)
+            }
         }
-
-        checkIfAdmin()
-
-        socket.on('chat:userAdded', (payload: ChatUserAddedPayload) => {
+        const chatUserAddedListener = (payload: ChatUserAddedPayload) => {
             const pUser = payload.participant.user
             if (payload.chatId === id && isUser(pUser)) {
                 setUsers(prev => [...prev, payload.participant])
                 setConnections(prev => prev.filter(user => user._id !== pUser._id))
             }
-        })
-        socket.on("chat:userRemoved", (payload: ChatUserRemovedPayload) => {
+        }
+        const chatUserRemovedListener = (payload: ChatUserRemovedPayload) => {
             if (payload.chatId === id) {
                 setUsers(prev => prev.filter(user => {
                     if (isUser(user.user)) {
@@ -128,8 +128,8 @@ const Participants = () => {
                     return false
                 }))
             }
-        })
-        socket.on('chat:userRoleChanged', (payload: ChatUserRoleChangedPayload) => {
+        }
+        const chatUserRoleChangedListener = (payload: ChatUserRoleChangedPayload) => {
             if (payload.chatId === id) {
                 setUsers(prev => prev.map(user => {
                     if ((isUser(user.user) && user.user._id === payload.userId) || user.user === payload.userId) {
@@ -138,12 +138,18 @@ const Participants = () => {
                     return user
                 }))
             }
-        })
+        }
+
+        checkIfAdmin()
+
+        socket.on('chat:userAdded', chatUserAddedListener)
+        socket.on("chat:userRemoved", chatUserRemovedListener)
+        socket.on('chat:userRoleChanged', chatUserRoleChangedListener)
 
         return () => {
-            socket.off('chat:userAdded')
-            socket.off('chat:userRemoved')
-            socket.off('chat:userRoleChanged')
+            socket.off('chat:userAdded', chatUserAddedListener)
+            socket.off('chat:userRemoved', chatUserRemovedListener)
+            socket.off('chat:userRoleChanged', chatUserRoleChangedListener)
         }
     }, [])
 
@@ -186,6 +192,9 @@ const Participants = () => {
                         <FlatList
                             data={search.value.length > 0 ? filteredUsers : connections}
                             renderItem={({ item }) => <UserFlatListItem item={item} onPressAdd={async () => await onPressAdd(item._id)} />}
+                            keyExtractor={(item) => item._id}
+                            ListEmptyComponent={<AddParticipantListEmptyComponent />}
+                            contentContainerStyle={styles.flatListContainer}
                         />
                     </View>
                 </BlurViewContainer>
@@ -211,6 +220,7 @@ const Participants = () => {
                         <ThemedText>Add participant</ThemedText>
                     </Pressable>}
                 </>}
+                contentContainerStyle={styles.flatListContainer}
             />
         </ThemedView>
     )
@@ -235,5 +245,8 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         alignItems: 'center',
         justifyContent: 'center'
+    },
+    flatListContainer: {
+        flex: 1
     }
 })

@@ -108,16 +108,15 @@ const Home = () => {
   }, [permission])
 
   useEffect(() => {
-    socket.on("chat:userAdded", (payload: ChatUserAddedPayload) => {
+    const chatUserAddedListener = (payload: ChatUserAddedPayload) => {
       setChats(prev => prev.map(chat => {
         if (chat._id === payload.chatId) {
           return { ...chat, participants: [...chat.participants, payload.participant] }
         }
         return chat
       }))
-    })
-
-    socket.on("chat:userRemoved", (payload: ChatUserRemovedPayload) => {
+    }
+    const chatUserRemovedListener = (payload: ChatUserRemovedPayload) => {
       setChats(prev => prev.map(chat => {
         if (payload.chatId === chat._id) {
           return {
@@ -132,9 +131,8 @@ const Home = () => {
         }
         return chat
       }))
-    })
-
-    socket.on("chat:userRoleChanged", (payload: ChatUserRoleChangedPayload) => {
+    }
+    const chatUserRoleChangedListener = (payload: ChatUserRoleChangedPayload) => {
       setChats(prev => prev.map(chat => {
         if (chat._id === payload.chatId) {
           return {
@@ -149,12 +147,16 @@ const Home = () => {
         }
         return chat
       }))
-    })
+    }
+
+    socket.on("chat:userAdded", chatUserAddedListener)
+    socket.on("chat:userRemoved", chatUserRemovedListener)
+    socket.on("chat:userRoleChanged", chatUserRoleChangedListener)
 
     return () => {
-      socket.off('chat:userAdded')
-      socket.off('chat:userRemoved')
-      socket.off('chat:userRoleChanged')
+      socket.off('chat:userAdded', chatUserAddedListener)
+      socket.off('chat:userRemoved', chatUserRemovedListener)
+      socket.off('chat:userRoleChanged', chatUserRoleChangedListener)
     }
   }, [])
 
