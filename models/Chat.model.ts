@@ -8,4 +8,6 @@ export default interface Chat {
     type: string
     chatName?: string
     photoUrl: string
+    updatedAt: string
+    createdAt: string
 }
