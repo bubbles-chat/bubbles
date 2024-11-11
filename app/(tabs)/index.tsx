@@ -22,8 +22,7 @@ import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { createGroupChatAsync, getUserByEmailAsync } from '@/store/userAsyncThunks'
 import { isChatArray, isUser } from '@/utils/typeChecker'
 import socket from '@/api/socket'
-import { ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload, UserAddedToChatPayload } from '@/types/socketPayload.type'
-import { addChat, removeChat } from '@/store/userSlice'
+import { ChatMessageAddedPayload, ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload, UserAddedToChatPayload } from '@/types/socketPayload.type'
 
 const Home = () => {
   const { user } = useAppSelector(state => state.user)
@@ -58,10 +57,7 @@ const Home = () => {
         }
 
         await messaging().registerDeviceForRemoteMessages()
-
         const token = await messaging().getToken()
-        console.log('notification token:', token);
-
         await addToken(token)
       }
 
@@ -110,16 +106,16 @@ const Home = () => {
 
   useEffect(() => {
     const chatUserAddedListener = (payload: ChatUserAddedPayload) => {
-        setChats(prev => prev.map(chat => {
-          if (chat._id === payload.chatId) {
-            return { ...chat, participants: [...chat.participants, payload.participant] }
-          }
-          return chat
-        }))
+      setChats(prev => prev.map(chat => {
+        if (chat._id === payload.chatId) {
+          return { ...chat, participants: [...chat.participants, payload.participant] }
+        }
+        return chat
+      }))
     }
     const chatUserRemovedListener = (payload: ChatUserRemovedPayload) => {
       if (payload.userId === user?._id) {
-        dispatch(removeChat(payload.chatId))
+        setChats(prev => prev.filter(chat => chat._id !== payload.chatId))
       } else {
         setChats(prev => prev.map(chat => {
           if (payload.chatId === chat._id) {
@@ -153,28 +149,37 @@ const Home = () => {
         return chat
       }))
     }
+    const chatMessageAddedListener = (payload: ChatMessageAddedPayload) => {
+      setChats(prev => {
+        const chatIndex = prev.findIndex(chat => chat._id === payload.chatId);
+
+        if (chatIndex > -1) {
+          const updatedChats = [...prev];
+          const [updatedChat] = updatedChats.splice(chatIndex, 1);
+          return [updatedChat, ...updatedChats];
+        }
+        return prev;
+      });
+    }
     const userAddedToChatListener = (payload: UserAddedToChatPayload) => {
-      dispatch(addChat(payload.chat))
+      setChats(prev => [payload.chat, ...prev])
     }
 
     socket.on("chat:userAdded", chatUserAddedListener)
     socket.on("chat:userRemoved", chatUserRemovedListener)
     socket.on("chat:userRoleChanged", chatUserRoleChangedListener)
+    socket.on('chat:messageAdded', chatMessageAddedListener)
+
     socket.on("user:addedToChat", userAddedToChatListener)
 
     return () => {
       socket.off('chat:userAdded', chatUserAddedListener)
       socket.off('chat:userRemoved', chatUserRemovedListener)
       socket.off('chat:userRoleChanged', chatUserRoleChangedListener)
+      socket.off('chat:messageAdded', chatMessageAddedListener)
       socket.off('user:addedToChat', userAddedToChatListener)
     }
   }, [])
-
-  useEffect(() => {
-    if (user?.chats && isChatArray(user.chats)) {
-      setChats(user.chats)
-    }
-  }, [user?.chats.length])
 
   return (
     <ThemedView style={[styles.contianer]}>
