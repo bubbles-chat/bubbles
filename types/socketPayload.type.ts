@@ -1,3 +1,4 @@
+import Chat from "@/models/Chat.model";
 import Message from "@/models/Message.model";
 import Participant from "@/models/Participant.model";
 
@@ -29,4 +30,8 @@ export interface ChatMessageEditedPayload {
 export interface ChatPhotoUpdatedPayload {
     chatId: string
     url: string
+}
+
+export interface UserAddedToChatPayload {
+    chat: Chat
 }
