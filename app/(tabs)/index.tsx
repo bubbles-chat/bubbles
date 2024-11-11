@@ -22,7 +22,8 @@ import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { createGroupChatAsync, getUserByEmailAsync } from '@/store/userAsyncThunks'
 import { isChatArray, isUser } from '@/utils/typeChecker'
 import socket from '@/api/socket'
-import { ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload } from '@/types/socketPayload.type'
+import { ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload, UserAddedToChatPayload } from '@/types/socketPayload.type'
+import { addChat, removeChat } from '@/store/userSlice'
 
 const Home = () => {
   const { user } = useAppSelector(state => state.user)
@@ -109,28 +110,32 @@ const Home = () => {
 
   useEffect(() => {
     const chatUserAddedListener = (payload: ChatUserAddedPayload) => {
-      setChats(prev => prev.map(chat => {
-        if (chat._id === payload.chatId) {
-          return { ...chat, participants: [...chat.participants, payload.participant] }
-        }
-        return chat
-      }))
+        setChats(prev => prev.map(chat => {
+          if (chat._id === payload.chatId) {
+            return { ...chat, participants: [...chat.participants, payload.participant] }
+          }
+          return chat
+        }))
     }
     const chatUserRemovedListener = (payload: ChatUserRemovedPayload) => {
-      setChats(prev => prev.map(chat => {
-        if (payload.chatId === chat._id) {
-          return {
-            ...chat,
-            participants: chat.participants.filter(participant => {
-              if (isUser(participant.user)) {
-                return participant.user._id !== payload.userId
-              }
-              return false
-            })
+      if (payload.userId === user?._id) {
+        dispatch(removeChat(payload.chatId))
+      } else {
+        setChats(prev => prev.map(chat => {
+          if (payload.chatId === chat._id) {
+            return {
+              ...chat,
+              participants: chat.participants.filter(participant => {
+                if (isUser(participant.user)) {
+                  return participant.user._id !== payload.userId
+                }
+                return false
+              })
+            }
           }
-        }
-        return chat
-      }))
+          return chat
+        }))
+      }
     }
     const chatUserRoleChangedListener = (payload: ChatUserRoleChangedPayload) => {
       setChats(prev => prev.map(chat => {
@@ -148,17 +153,28 @@ const Home = () => {
         return chat
       }))
     }
+    const userAddedToChatListener = (payload: UserAddedToChatPayload) => {
+      dispatch(addChat(payload.chat))
+    }
 
     socket.on("chat:userAdded", chatUserAddedListener)
     socket.on("chat:userRemoved", chatUserRemovedListener)
     socket.on("chat:userRoleChanged", chatUserRoleChangedListener)
+    socket.on("user:addedToChat", userAddedToChatListener)
 
     return () => {
       socket.off('chat:userAdded', chatUserAddedListener)
       socket.off('chat:userRemoved', chatUserRemovedListener)
       socket.off('chat:userRoleChanged', chatUserRoleChangedListener)
+      socket.off('user:addedToChat', userAddedToChatListener)
     }
   }, [])
+
+  useEffect(() => {
+    if (user?.chats && isChatArray(user.chats)) {
+      setChats(user.chats)
+    }
+  }, [user?.chats.length])
 
   return (
     <ThemedView style={[styles.contianer]}>
