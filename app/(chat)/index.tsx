@@ -26,7 +26,7 @@ import { isUser } from '@/utils/typeChecker'
 import { ChatMessageAddedPayload, ChatMessageEditedPayload, ChatPhotoUpdatedPayload, ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload } from '@/types/socketPayload.type'
 import CustomModal from '@/components/CustomModal'
 import CustomButton from '@/components/CustomButton'
-import { changeGroupChatPhoto } from '@/api/chatApi'
+import { changeGroupChatPhoto, removeParticipantFromGroupChat } from '@/api/chatApi'
 
 const Chat = () => {
     const limit = 20
@@ -256,6 +256,30 @@ const Chat = () => {
         }
     }
 
+    const onPressLeaveChat = async () => {
+        const parts = JSON.parse(participants as string) as Participant[]
+        const numOfAdmins = parts.reduce((prevValue, part) => part.isAdmin ? prevValue + 1 : prevValue, 0)
+        const currentParticipant = parts.filter(part => {
+            if (isUser(part.user)) {
+                return part.user._id === user?._id
+            }
+            return false
+        })
+
+        if ((numOfAdmins > 1 && currentParticipant[0].isAdmin) || !currentParticipant[0].isAdmin) {
+            try {
+                await removeParticipantFromGroupChat(id as string, user?._id as string)
+                router.back()
+            } catch (e) {
+                const err = e as AxiosError
+                console.log('onPressLeaveChat:', err.response?.data)
+                showToast("Couldn't leave chat")
+            }
+        } else {
+            showToast('Change the role of one of the participants to admin first')
+        }
+    }
+
     useEffect(() => {
         navigation.setOptions({
             headerRight: () => (
@@ -298,7 +322,7 @@ const Chat = () => {
                 }))}>
                     <ThemedText>participants</ThemedText>
                 </Pressable>,
-                <Pressable style={styles.chatOptionsBtns}>
+                <Pressable style={styles.chatOptionsBtns} onPress={() => onPressOption(onPressLeaveChat)}>
                     <ThemedText style={{ color: 'red' }}>Leave chat</ThemedText>
                 </Pressable>
             ])
@@ -457,7 +481,7 @@ const Chat = () => {
                     horizontal
                     contentContainerStyle={styles.previewFlatList}
                 />
-                <View style={[styles.inputView, { borderColor: textColor, }]}>
+                <View style={[styles.inputView, { borderColor: textColor }]}>
                     <TextInput
                         value={message.text}
                         placeholder='Type a message'
