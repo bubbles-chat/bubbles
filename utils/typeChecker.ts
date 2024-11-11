@@ -11,4 +11,8 @@ export const isUserArray = (connections: User[] | string[]): connections is User
 
 export const isChatArray = (chats: Chat[] | string[]): chats is Chat[] => {
     return chats.length > 0 && typeof chats[0] !== 'string'
-  }
+}
+
+export const isChat = (chat: string | Chat): chat is Chat => {
+    return typeof chat !== 'string'
+}
