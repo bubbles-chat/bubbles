@@ -38,14 +38,26 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
             }
         }
 
+        const chatMessageAddedListener = (payload: ChatMessageAddedPayload) => {
+            if (payload.chatId === item._id) {
+                setLastMessage(payload.message.text)
+            }
+        }
+
         fetchLastMessage()
+
+        socket.emit('chat:joinRoom', item._id)
+        socket.on('chat:messageAdded', chatMessageAddedListener)
+
+        return () => {
+            socket.off('chat:messageAdded', chatMessageAddedListener)
+        }
     }, [])
 
     useEffect(() => {
         if (isFocused) {
             const chatMessageAddedListener = (payload: ChatMessageAddedPayload) => {
                 if (payload.chatId === item._id) {
-                    setLastMessage(payload.message.text)
                     setCounter(prev => prev + 1)
                 }
             }
