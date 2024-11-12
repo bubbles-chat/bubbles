@@ -1,4 +1,4 @@
-import { FlatList, Platform, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { Platform, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { useEffect, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import { useHeaderHeight } from '@react-navigation/elements'
@@ -23,6 +23,7 @@ import { createGroupChatAsync, getUserByEmailAsync } from '@/store/userAsyncThun
 import { isChatArray, isUser } from '@/utils/typeChecker'
 import socket from '@/api/socket'
 import { ChatMessageAddedPayload, ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload, UserAddedToChatPayload } from '@/types/socketPayload.type'
+import Animated, { LinearTransition } from 'react-native-reanimated'
 
 const Home = () => {
   const { user } = useAppSelector(state => state.user)
@@ -230,13 +231,14 @@ const Home = () => {
           />
         </View>
       </CustomModal>
-      {(user && isChatArray(chats)) && <FlatList
+      {(user && isChatArray(chats)) && <Animated.FlatList
         data={chats}
         renderItem={({ item }) => <ChatFlatListItem item={item} />}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.flatListContainer}
         ListHeaderComponent={<View style={{ height: headerHeight }} />}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+        itemLayoutAnimation={LinearTransition}
       />}
       {!user?.chats.length && <ChatListEmptyComponent />}
       <TouchableOpacity
