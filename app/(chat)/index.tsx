@@ -6,7 +6,7 @@ import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '@/components/ThemedText'
 import { Colors } from '@/constants/Colors'
 import { Entypo, Feather, Ionicons } from '@expo/vector-icons'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import Animated, { LinearTransition, useAnimatedRef, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import useGradualAnimation from '@/hooks/useGradualAnimation'
 import { PADDING_BOTTOM } from '@/constants/Dimensions'
 import Message from '@/models/Message.model'
@@ -57,7 +57,7 @@ const Chat = () => {
     const { height } = useGradualAnimation()
     const scrollToBottomOpacity = useSharedValue(0)
 
-    const flatListRef = useRef<FlatList>(null)
+    const flatListRef = useAnimatedRef<Animated.FlatList<Message>>()
 
     const fakeView = useAnimatedStyle(() => {
         return {
@@ -444,7 +444,7 @@ const Chat = () => {
                     </View>}
                 </View>
             </CustomModal>
-            <FlatList
+            <Animated.FlatList
                 ref={flatListRef}
                 data={messages}
                 renderItem={({ item }) => <MessageFlatListItem item={item} />}
@@ -463,6 +463,7 @@ const Chat = () => {
                 }}
                 onEndReachedThreshold={0.5}
                 onScroll={handleOnScroll}
+                itemLayoutAnimation={LinearTransition}
             />
             <Animated.View style={[styles.scrollToBottomBtnView, scollToBottomBtn, { backgroundColor: bubbleBackground }]}>
                 <TouchableOpacity style={styles.scrollToBottomBtn} onPress={handleOnPressScrollToBottom}>
