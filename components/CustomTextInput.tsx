@@ -3,25 +3,29 @@ import { CustomTextInputProps } from '@/types/types'
 import React from 'react'
 import { StyleSheet, View, TextInput, Text, Pressable } from 'react-native'
 
-const CustomTextInput: React.FC<CustomTextInputProps> = (props) => {
+const CustomTextInput: React.FC<CustomTextInputProps> = ({ style, customBorderColor, customTextColor, ...props }) => {
     const borderColor = useThemeColor({ light: props.lightBorderColor, dark: props.darkBorderColor }, 'text') as string
 
     return (
         <>
             <View style={[
                 styles.container,
-                props.style,
+                style,
                 {
                     borderColor: props.hasValidation ?
-                        props.state.validation?.isValid ? borderColor : 'red' : borderColor
+                        props.state.validation?.isValid ? customBorderColor ?
+                            customBorderColor : borderColor :
+                            'red' : customBorderColor ?
+                            customBorderColor : borderColor
                 }
             ]}>
                 {props.Icon}
                 <TextInput
                     {...props}
-                    style={[styles.textInput, { color: borderColor }]}
+                    style={[styles.textInput, { color: customTextColor ? customTextColor : borderColor }]}
                     value={props.state.value}
-                    placeholderTextColor={borderColor}
+                    placeholderTextColor={customTextColor ? customTextColor : borderColor}
+                    cursorColor={customTextColor ? customTextColor : borderColor}
                 />
                 {props.pressableIcon ? <Pressable style={styles.pressable} onPress={props.pressableOnPress}>{props.pressableIcon}</Pressable> : null}
             </View>
