@@ -24,7 +24,10 @@
       "softwareKeyboardLayoutMode": "pan",
       "package": "com.youssef_negm.bubbles",
       "googleServicesFile": "./google-services.json",
-      "userInterfaceStyle": "automatic"
+      "userInterfaceStyle": "automatic",
+      "splash": {
+        "image": "./assets/images/splash.png"
+      }
     },
     "web": {
       "bundler": "metro",
