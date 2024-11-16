@@ -8,6 +8,8 @@ import User from "@/models/User.model";
 import messaging from '@react-native-firebase/messaging'
 import { deleteToken } from "@/api/notificationTokenApi";
 import { createGroupChat } from "@/api/chatApi";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { IS_FCM_REGISTERED } from "@/constants/AsyncStorageKeys";
 
 export const addUserAsync = createAsyncThunk('user/addUserAsync', async ({
     email,
@@ -63,6 +65,7 @@ export const signOutAsync = createAsyncThunk('user/signOutAsync', async (): Prom
 
         await messaging().deleteToken() // unregistering device token from firebase
         await deleteToken(token) // deleting device token from the database
+        await AsyncStorage.setItem(IS_FCM_REGISTERED, JSON.stringify(false))
         await auth().signOut()
     } catch (e) {
         Alert.alert('Sign out failed', 'Please try again later', [{
