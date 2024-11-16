@@ -1,4 +1,4 @@
-import { Platform, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { Platform, RefreshControl, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native'
 import { useEffect, useState } from 'react'
 import { ThemedView } from '@/components/ThemedView'
 import { useHeaderHeight } from '@react-navigation/elements'
@@ -26,6 +26,7 @@ import { ChatMessageAddedPayload, ChatUserAddedPayload, ChatUserRemovedPayload, 
 import Animated, { LinearTransition } from 'react-native-reanimated'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { IS_FCM_REGISTERED } from '@/constants/AsyncStorageKeys'
+import { Colors } from '@/constants/Colors'
 
 const Home = () => {
   const { user } = useAppSelector(state => state.user)
@@ -42,6 +43,8 @@ const Home = () => {
   const headerHeight = useHeaderHeight()
   const textColor = useThemeColor({}, 'text') as string
   const buttonBackground = useThemeColor({}, 'buttonBackground') as string
+  const colorScheme = useColorScheme()
+  const addIconColor = colorScheme === 'dark' ? Colors.light.text : Colors.dark.text
 
   const handleDeclineOnPress = () => {
     setNotificationModalVisible(false)
@@ -250,7 +253,7 @@ const Home = () => {
       >
         <Ionicons
           name='add'
-          color={textColor}
+          color={addIconColor}
           size={50}
         />
       </TouchableOpacity>

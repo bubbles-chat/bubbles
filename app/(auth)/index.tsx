@@ -1,12 +1,11 @@
 import CustomTextInput from "@/components/CustomTextInput";
-import { useMemo, useState } from "react";
-import { GestureResponderEvent, Image, NativeSyntheticEvent, PermissionsAndroid, Pressable, StyleSheet, Text, TextInputFocusEventData, useColorScheme, View } from "react-native";
+import { useState } from "react";
+import { GestureResponderEvent, Image, NativeSyntheticEvent, PermissionsAndroid, Pressable, StyleSheet, Text, TextInputFocusEventData, View } from "react-native";
 import { AntDesign, MaterialIcons } from '@expo/vector-icons'
 import { InputState } from "@/types/types";
 import CustomButton from "@/components/CustomButton";
 import { router } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
-import { Colors } from "@/constants/Colors";
 import ThemedLinearGradient from "@/components/ThemedLinearGradient";
 import Loading from "@/components/Loading";
 import { validateEmail } from "@/utils/inputValidation";
@@ -43,10 +42,6 @@ export default function Index() {
   const [error, setError] = useState<Error | null>(null)
 
   const dispatch = useAppDispatch()
-
-  const colorScheme = useColorScheme()
-
-  const iconColor = useMemo(() => colorScheme === 'dark' ? Colors.dark.text : Colors.light.text, [colorScheme])
 
   const handleEmailOnChangeText = (text: string): void => {
     setEmail((prev: InputState): InputState => ({
@@ -110,7 +105,6 @@ export default function Index() {
           await messaging().registerDeviceForRemoteMessages()
 
           const notificationToken = await messaging().getToken()
-          console.log('fcm token:', notificationToken);
 
           await addToken(notificationToken)
         }
@@ -182,13 +176,15 @@ export default function Index() {
         Icon={<AntDesign
           name="mail"
           size={18}
-          color={email.validation?.isValid ? iconColor : 'red'}
+          color={email.validation?.isValid ? '#fff' : 'red'}
         />}
         onChangeText={handleEmailOnChangeText}
         onFocus={handleEmailOnFocus}
         onBlur={handleEmailOnBlur}
         keyboardType="email-address"
         autoCapitalize="none"
+        customBorderColor="#fff"
+        customTextColor="#fff"
       />
       <View style={styles.separator} />
       <CustomTextInput
@@ -199,12 +195,14 @@ export default function Index() {
         Icon={<MaterialIcons
           name="password"
           size={18}
-          color={password.validation?.isValid ? iconColor : 'red'}
+          color={password.validation?.isValid ? "#fff" : 'red'}
         />}
         onChangeText={handlePasswordOnChangeText}
         onBlur={handlePasswordOnBlur}
         onFocus={handlePasswordOnFocus}
         autoCapitalize="none"
+        customBorderColor="#fff"
+        customTextColor="#fff"
       />
       {error && <Text style={styles.errorMessage}>Invalid credential</Text>}
       <Pressable style={styles.pressable} onPress={handleForgotPassowrdOnPress}>
@@ -214,16 +212,20 @@ export default function Index() {
       <CustomButton
         onPress={handleSignInOnPress}
         text="Sign in"
+        customBackgroundColor="#000"
+        customTextColor="#fff"
       />
       <ThemedText style={styles.orText}>Or</ThemedText>
       <CustomButton
         onPress={handleSignInWIthGoogleOnPress}
         text="Sign in with Google"
-        Icon={<AntDesign name="google" size={20} color={iconColor} />}
+        Icon={<AntDesign name="google" size={20} color={"#fff"} />}
+        customBackgroundColor="#000"
+        customTextColor="#fff"
       />
       <View style={styles.separator} />
       <Pressable style={styles.pressable} onPress={handleSignUpOnPress}>
-        <ThemedText>Don't have an account? <Text style={styles.secondryText}>Sign up</Text></ThemedText>
+        <ThemedText style={styles.text}>Don't have an account? <Text style={styles.secondryText}>Sign up</Text></ThemedText>
       </Pressable>
     </ThemedLinearGradient>
   );
@@ -240,11 +242,12 @@ const styles = StyleSheet.create({
   },
   secondryText: {
     textDecorationLine: "underline",
-    color: '#6d6d6d'
+    color: '#fff'
   },
   orText: {
     textAlign: 'center',
-    fontSize: 16
+    fontSize: 16,
+    color: '#fff'
   },
   icon: {
     width: 100,
@@ -260,5 +263,8 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     color: 'red'
+  },
+  text: {
+    color: '#fff'
   }
 })

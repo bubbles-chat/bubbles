@@ -8,7 +8,7 @@ import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { signOutAsync } from '@/store/userAsyncThunks'
 import { MaterialIcons } from '@expo/vector-icons'
 import { Colors } from '@/constants/Colors'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { PADDING_TOP, TAB_BAR_HEIGHT } from '@/constants/Dimensions'
 import CustomModal from '@/components/CustomModal'
 import QRCode from 'react-native-qrcode-svg'
@@ -19,8 +19,8 @@ const Profile = () => {
     const headerHeight = useHeaderHeight()
     const dispatch = useAppDispatch()
     const colorScheme = useColorScheme()
-    const iconColor = useMemo(() => colorScheme === 'dark' ? Colors.dark.text : Colors.light.text, [colorScheme])
-    const gradient = colorScheme === 'dark' ? Colors.dark.gradient.filter(color => color !== '#000') : Colors.light.gradient
+    const iconColor = colorScheme === 'dark' ? Colors.light.text : Colors.dark.text
+    const gradient = Colors.dark.gradient.filter(color => color !== '#000')
 
     const handleShowQrCodeOnPress = () => {
         setQrModalVisible(true)
