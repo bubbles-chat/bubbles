@@ -24,6 +24,8 @@ import { isChatArray, isUser } from '@/utils/typeChecker'
 import socket from '@/api/socket'
 import { ChatMessageAddedPayload, ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload, UserAddedToChatPayload } from '@/types/socketPayload.type'
 import Animated, { LinearTransition } from 'react-native-reanimated'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { IS_FCM_REGISTERED } from '@/constants/AsyncStorageKeys'
 
 const Home = () => {
   const { user } = useAppSelector(state => state.user)
@@ -60,6 +62,7 @@ const Home = () => {
         await messaging().registerDeviceForRemoteMessages()
         const token = await messaging().getToken()
         await addToken(token)
+        await AsyncStorage.setItem(IS_FCM_REGISTERED, JSON.stringify(true))
       }
 
       setNotificationModalVisible(false)
@@ -97,8 +100,19 @@ const Home = () => {
 
   useEffect(() => {
     const requestNotificationPermission = async () => {
+      const isFcmRegistered = JSON.parse(await AsyncStorage.getItem(IS_FCM_REGISTERED) ?? 'false') as boolean
+
       if (permission && !permission?.granted && permission?.canAskAgain) {
         setNotificationModalVisible(true)
+      } else if (permission && permission.granted && !isFcmRegistered) {
+        try {
+          await messaging().registerDeviceForRemoteMessages()
+          const token = await messaging().getToken()
+          await addToken(token)
+          await AsyncStorage.setItem(IS_FCM_REGISTERED, JSON.stringify(true))
+        } catch (e) {
+          console.log(e)
+        }
       }
     }
 
