@@ -16,6 +16,7 @@ import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { addUserAsync } from '@/store/userAsyncThunks'
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import { updateAuthHeaders } from '@/utils/jwt'
+import { addUser } from '@/api/userApi'
 
 const SignUp = () => {
     const [email, setEmail] = useState<InputState>({
@@ -181,11 +182,9 @@ const SignUp = () => {
                 passwordValidationResult.isValid &&
                 confirmPasswordValidationResult.isValid
             ) {
+                await addUser(email.value, username.value, '')
                 await auth().createUserWithEmailAndPassword(email.value, password.value)
                 await auth().currentUser?.updateProfile({ displayName: username.value })
-                await updateAuthHeaders()
-
-                dispatch(addUserAsync({ email: email.value, displayName: username.value, photoURL: '' }))
             }
         } catch (e) {
             Alert.alert('Registeration failed', 'Try again later', [{
