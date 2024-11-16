@@ -1,10 +1,9 @@
-import { Alert, NativeSyntheticEvent, StyleSheet, TextInputFocusEventData, useColorScheme, View } from 'react-native'
-import React, { useMemo, useState } from 'react'
+import { Alert, NativeSyntheticEvent, StyleSheet, TextInputFocusEventData, View } from 'react-native'
+import { useState } from 'react'
 import { InputState } from '@/types/types'
 import CustomTextInput from '@/components/CustomTextInput'
 import { AntDesign } from '@expo/vector-icons'
 import CustomButton from '@/components/CustomButton'
-import { Colors } from '@/constants/Colors'
 import ThemedLinearGradient from '@/components/ThemedLinearGradient'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { validateEmail } from '@/utils/inputValidation'
@@ -23,10 +22,6 @@ const ForgotPassword = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
   const headerHeight = useHeaderHeight()
-
-  const colorScheme = useColorScheme()
-
-  const iconColor = useMemo(() => colorScheme === 'dark' ? Colors.dark.text : Colors.light.text, [colorScheme])
 
   const handleEmailOnChangeText = (text: string): void => {
     setEmail((prev: InputState): InputState => ({
@@ -85,17 +80,21 @@ const ForgotPassword = () => {
         state={email}
         hasValidation={true}
         placeholder="E-mail"
-        Icon={<AntDesign name="mail" size={18} color={iconColor} />}
+        Icon={<AntDesign name="mail" size={18} color={"#fff"} />}
         onChangeText={handleEmailOnChangeText}
         onFocus={handleEmailOnFocus}
         onBlur={handleEmailOnBlur}
         keyboardType="email-address"
         autoCapitalize="none"
+        customBorderColor="#fff"
+        customTextColor="#fff"
       />
       <View style={styles.separator} />
       <CustomButton
         text='Send E-mail'
         onPress={handleSendEmailOnPress}
+        customBackgroundColor='#000'
+        customTextColor='#fff'
       />
     </ThemedLinearGradient>
   )

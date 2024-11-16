@@ -21,6 +21,7 @@ import CustomButton from '@/components/CustomButton'
 import { BarCodeScanningResult } from 'expo-camera/build/legacy/Camera.types'
 import { PADDING_TOP } from '@/constants/Dimensions'
 import { ThemedText } from '@/components/ThemedText'
+import Animated, { LinearTransition } from 'react-native-reanimated'
 
 const Search = () => {
     const [search, setSearch] = useState<InputState>({
@@ -251,7 +252,7 @@ const Search = () => {
                 />}
                 pressableOnPress={handleOnPressCamera}
             />
-            <FlatList
+            <Animated.FlatList
                 data={users}
                 renderItem={({ item }) => <UserFlatListItem item={item} onPressAdd={async () => await handleOnPressAdd(item._id)} />}
                 keyExtractor={(item, _) => item._id}
@@ -261,6 +262,7 @@ const Search = () => {
                 ListEmptyComponent={<UserListEmptyComponent query={search.value} />}
                 contentContainerStyle={styles.flatListContainer}
                 keyboardDismissMode='on-drag'
+                itemLayoutAnimation={LinearTransition}
             />
         </ThemedView>
     )

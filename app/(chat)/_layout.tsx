@@ -1,26 +1,29 @@
-import { useColorScheme } from 'react-native'
 import { Stack } from 'expo-router'
-import { Colors } from '@/constants/Colors'
 import BlurViewContainer from '@/components/BlurViewContainer'
+import { StatusBar } from 'expo-status-bar'
+import { useThemeColor } from '@/hooks/useThemeColor'
 
 const ChatLayout = () => {
-    const colorScheme = useColorScheme()
-    const textColor = colorScheme === 'dark' ? Colors.dark.text : Colors.light.text
+    const textColor = useThemeColor({}, 'text') as string
 
     return (
-        <Stack
-            screenOptions={{
-                headerBackground: () => <BlurViewContainer />,
-                headerTransparent: true,
-                headerTitleStyle: {
-                    color: textColor
-                },
-                headerTintColor: textColor
-            }}
-        >
-            <Stack.Screen name='index' />
-            <Stack.Screen name='(attachments)' options={{ title: "Saved attachments" }} />
-        </Stack>
+        <>
+            <Stack
+                screenOptions={{
+                    headerBackground: () => <BlurViewContainer />,
+                    headerTransparent: true,
+                    headerTitleStyle: {
+                        color: textColor
+                    },
+                    headerTintColor: textColor
+                }}
+            >
+                <Stack.Screen name='index' />
+                <Stack.Screen name='(attachments)' options={{ title: "Saved attachments" }} />
+                <Stack.Screen name='participants' />
+            </Stack>
+            <StatusBar backgroundColor='transparent' />
+        </>
     )
 }
 

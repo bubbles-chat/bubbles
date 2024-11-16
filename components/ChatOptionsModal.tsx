@@ -19,16 +19,16 @@ const ChatOptionsModal = ({ visible, onRequestClose, options = [], ...rest }: Mo
             {...rest}
         >
             <TouchableWithoutFeedback onPress={onRequestClose}>
-                <View style={[styles.container, { top: headerHeight }]}>
+                <View style={styles.container}>
                     <TouchableWithoutFeedback onPress={handleModalTap}>
-                        <View style={styles.centeredView}>
+                        <View style={[styles.centeredView, { top: headerHeight - 20 }]}>
                             <BlurView
                                 experimentalBlurMethod='dimezisBlurView'
                                 intensity={80}
                                 tint={colorScheme === 'dark' ? 'dark' : 'light'}
                                 style={styles.modalView}
                             >
-                                {options.map(option => option)}
+                                {options.map((option, index) => <View key={index}>{option}</View>)}
                             </BlurView>
                         </View>
                     </TouchableWithoutFeedback>

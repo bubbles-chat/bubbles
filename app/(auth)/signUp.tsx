@@ -16,6 +16,7 @@ import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { addUserAsync } from '@/store/userAsyncThunks'
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import { updateAuthHeaders } from '@/utils/jwt'
+import { addUser } from '@/api/userApi'
 
 const SignUp = () => {
     const [email, setEmail] = useState<InputState>({
@@ -181,11 +182,9 @@ const SignUp = () => {
                 passwordValidationResult.isValid &&
                 confirmPasswordValidationResult.isValid
             ) {
+                await addUser(email.value, username.value, '')
                 await auth().createUserWithEmailAndPassword(email.value, password.value)
                 await auth().currentUser?.updateProfile({ displayName: username.value })
-                await updateAuthHeaders()
-
-                dispatch(addUserAsync({ email: email.value, displayName: username.value, photoURL: '' }))
             }
         } catch (e) {
             Alert.alert('Registeration failed', 'Try again later', [{
@@ -238,12 +237,14 @@ const SignUp = () => {
                 Icon={<AntDesign
                     name='user'
                     size={18}
-                    color={username.validation?.isValid ? iconColor : 'red'}
+                    color={username.validation?.isValid ? "#fff" : 'red'}
                 />}
                 onChangeText={handleUsernameOnCHangeText}
                 onBlur={handleUsernameOnBlur}
                 onFocus={handleUsernameOnFocus}
                 keyboardType='default'
+                customBorderColor="#fff"
+                customTextColor="#fff"
             />
             <View style={styles.separator} />
             <CustomTextInput
@@ -253,13 +254,15 @@ const SignUp = () => {
                 Icon={<AntDesign
                     name="mail"
                     size={18}
-                    color={email.validation?.isValid ? iconColor : 'red'}
+                    color={email.validation?.isValid ? "#fff" : 'red'}
                 />}
                 onChangeText={handleEmailOnChangeText}
                 onFocus={handleEmailOnFocus}
                 onBlur={handleEmailOnBlur}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                customBorderColor="#fff"
+                customTextColor="#fff"
             />
             <View style={styles.separator} />
             <CustomTextInput
@@ -270,12 +273,14 @@ const SignUp = () => {
                 Icon={<MaterialIcons
                     name="password"
                     size={18}
-                    color={password.validation?.isValid ? iconColor : 'red'}
+                    color={password.validation?.isValid ? "#fff" : 'red'}
                 />}
                 onChangeText={handlePasswordOnChangeText}
                 onBlur={handlePasswordOnBlur}
                 onFocus={handlePasswordOnFocus}
                 autoCapitalize="none"
+                customBorderColor="#fff"
+                customTextColor="#fff"
             />
             <View style={styles.separator} />
             <CustomTextInput
@@ -286,27 +291,33 @@ const SignUp = () => {
                 Icon={<MaterialIcons
                     name="password"
                     size={18}
-                    color={confirmPassword.validation?.isValid ? iconColor : 'red'}
+                    color={confirmPassword.validation?.isValid ? "#fff" : 'red'}
                 />}
                 onChangeText={handleConfirmPasswordOnChangeText}
                 onBlur={handleConfirmPasswordOnBlur}
                 onFocus={handleConfirmPasswordOnFocus}
                 autoCapitalize="none"
+                customBorderColor="#fff"
+                customTextColor="#fff"
             />
             <View style={styles.separator} />
             <CustomButton
                 text='Sign up'
                 onPress={handleSignUpOnPress}
+                customBackgroundColor='#000'
+                customTextColor='#fff'
             />
             <ThemedText style={styles.orText}>Or</ThemedText>
             <CustomButton
                 onPress={handleSignUpWithGoogleOnPress}
                 text="Sign up with Google"
-                Icon={<AntDesign name="google" size={20} color={iconColor} />}
+                Icon={<AntDesign name="google" size={20} color={"#fff"} />}
+                customBackgroundColor='#000'
+                customTextColor='#fff'
             />
             <View style={styles.separator} />
             <Pressable style={styles.pressable} onPress={handleSignInOnPress}>
-                <ThemedText>Already have an account? <Text style={styles.secondryText}>Sign in</Text></ThemedText>
+                <ThemedText style={styles.text}>Already have an account? <Text style={styles.secondryText}>Sign in</Text></ThemedText>
             </Pressable>
         </ThemedLinearGradient>
     )
@@ -324,7 +335,7 @@ const styles = StyleSheet.create({
     },
     secondryText: {
         textDecorationLine: 'underline',
-        color: '#6d6d6d'
+        color: '#fff'
     },
     pressable: {
         padding: 8
@@ -332,5 +343,8 @@ const styles = StyleSheet.create({
     orText: {
         textAlign: 'center',
         fontSize: 16
+    },
+    text: {
+        color: '#fff'
     }
 })

@@ -6,7 +6,7 @@ import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '@/components/ThemedText'
 import { Colors } from '@/constants/Colors'
 import { Entypo, Feather, Ionicons } from '@expo/vector-icons'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import Animated, { LinearTransition, useAnimatedRef, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import useGradualAnimation from '@/hooks/useGradualAnimation'
 import { PADDING_BOTTOM } from '@/constants/Dimensions'
 import Message from '@/models/Message.model'
@@ -21,10 +21,17 @@ import * as MediaLibrary from 'expo-media-library'
 import showToast from '@/components/Toast'
 import AttachmentUrl from '@/models/AttachmentUrl.model'
 import ChatOptionsModal from '@/components/ChatOptionsModal'
+import Participant from '@/models/Participant.model'
+import { isUser } from '@/utils/typeChecker'
+import { ChatMessageAddedPayload, ChatMessageEditedPayload, ChatPhotoUpdatedPayload, ChatUserAddedPayload, ChatUserRemovedPayload, ChatUserRoleChangedPayload } from '@/types/socketPayload.type'
+import CustomModal from '@/components/CustomModal'
+import CustomButton from '@/components/CustomButton'
+import { changeGroupChatPhoto, removeParticipantFromGroupChat } from '@/api/chatApi'
 
 const Chat = () => {
     const limit = 20
     const { id, type, chatName, photoUrl } = useLocalSearchParams()
+    let { participants } = useLocalSearchParams()
     const { user } = useAppSelector(state => state.user)
     const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions()
 
@@ -40,6 +47,9 @@ const Chat = () => {
     const [counter, setCounter] = useState(0)
     const [isSending, setIsSending] = useState(false)
     const [optionsModalVisible, setOptionsModalVisible] = useState(false)
+    const [chatPhoto, setChatPhoto] = useState<DocumentPicker.DocumentPickerAsset | null>(null)
+    const [confirmPhotoModalVisible, setConfirmPhotoModalVisible] = useState(false)
+    const [headerPhotoUrl, setHeaderPhotoUrl] = useState<string>(photoUrl as string)
 
     const navigation = useNavigation()
     const headerHeight = useHeaderHeight()
@@ -47,7 +57,7 @@ const Chat = () => {
     const { height } = useGradualAnimation()
     const scrollToBottomOpacity = useSharedValue(0)
 
-    const flatListRef = useRef<FlatList>(null)
+    const flatListRef = useAnimatedRef<Animated.FlatList<Message>>()
 
     const fakeView = useAnimatedStyle(() => {
         return {
@@ -64,8 +74,8 @@ const Chat = () => {
 
     const textColor = colorScheme === 'dark' ? Colors.dark.text : Colors.light.text
     const bubbleBackground = colorScheme === 'dark' ? '#343434' : '#d3d3d3'
-    const options = [
-        <Pressable key={1} onPress={() => onPressOption(() => router.push({
+    const [options, setOptions] = useState([
+        <Pressable key={1} style={styles.chatOptionsBtns} onPress={() => onPressOption(() => router.push({
             pathname: '/(chat)/(attachments)',
             params: {
                 chatId: id
@@ -73,7 +83,7 @@ const Chat = () => {
         }))}>
             <ThemedText>Saved attachments</ThemedText>
         </Pressable>
-    ]
+    ])
 
     const onPressOption = (callback: () => void) => {
         setOptionsModalVisible(false)
@@ -206,15 +216,72 @@ const Chat = () => {
         }
     }
 
+    const onPressChangePhoto = async () => {
+        const result = await DocumentPicker.getDocumentAsync({
+            type: 'image/*',
+            multiple: false
+        })
+
+        if (!result.canceled) {
+            setChatPhoto(result.assets[0])
+            setConfirmPhotoModalVisible(true)
+            setOptionsModalVisible(false)
+        }
+    }
+
+    const onRequestCloseConfirmPhotoModal = () => {
+        setConfirmPhotoModalVisible(false)
+        setChatPhoto(null)
+    }
+
+    const onPressYesConfirmPhoto = async () => {
+        setIsLoading(true)
+        try {
+            const data = new FormData()
+
+            data.append('file', {
+                uri: chatPhoto?.uri,
+                name: chatPhoto?.name,
+                type: chatPhoto?.mimeType
+            } as any)
+            await changeGroupChatPhoto(data, id as string)
+            setConfirmPhotoModalVisible(false)
+            showToast("Group chat photo updated")
+        } catch (e) {
+            const err = e as AxiosError
+            console.log('onPressYesConfirmPhoto:', err.response?.data)
+            showToast("Couldn't change group photo")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const onPressLeaveChat = async () => {
+        const parts = JSON.parse(participants as string) as Participant[]
+        const numOfAdmins = parts.reduce((prevValue, part) => part.isAdmin ? prevValue + 1 : prevValue, 0)
+        const currentParticipant = parts.filter(part => {
+            if (isUser(part.user)) {
+                return part.user._id === user?._id
+            }
+            return false
+        })
+
+        if ((numOfAdmins > 1 && currentParticipant[0].isAdmin) || !currentParticipant[0].isAdmin) {
+            try {
+                await removeParticipantFromGroupChat(id as string, user?._id as string)
+                router.back()
+            } catch (e) {
+                const err = e as AxiosError
+                console.log('onPressLeaveChat:', err.response?.data)
+                showToast("Couldn't leave chat")
+            }
+        } else {
+            showToast('Change the role of one of the participants to admin first')
+        }
+    }
+
     useEffect(() => {
         navigation.setOptions({
-            headerTitle: () => <>
-                <Image
-                    source={photoUrl.length === 0 ? require('@/assets/images/avatar.png') : { uri: photoUrl }}
-                    style={styles.image}
-                />
-                <ThemedText>{chatName}</ThemedText>
-            </>,
             headerRight: () => (
                 <Pressable style={styles.optionsBtn} onPress={handleOnPressOptions}>
                     <Entypo
@@ -226,28 +293,125 @@ const Chat = () => {
             )
         })
 
-        socket.emit('chat:joinRoom', id)
-        socket.on('chat:messageAdded', (payload: { chatId: string, message: Message }) => {
+        if (type === 'group') {
+            const parts = JSON.parse(participants as string) as Participant[]
+            const currentParticipant = parts.filter(part => {
+                if (isUser(part.user)) {
+                    return part.user._id === user?._id
+                }
+                return false
+            })
+
+            if (currentParticipant[0].isAdmin) {
+                setOptions(prev => [
+                    ...prev,
+                    <Pressable style={styles.chatOptionsBtns} onPress={onPressChangePhoto}>
+                        <ThemedText>change photo</ThemedText>
+                    </Pressable>
+                ])
+            }
+
+            setOptions(prev => [
+                ...prev,
+                <Pressable style={styles.chatOptionsBtns} onPress={() => onPressOption(() => router.push({
+                    pathname: '/(chat)/participants',
+                    params: {
+                        id,
+                        participants
+                    }
+                }))}>
+                    <ThemedText>participants</ThemedText>
+                </Pressable>,
+                <Pressable style={styles.chatOptionsBtns} onPress={() => onPressOption(onPressLeaveChat)}>
+                    <ThemedText style={{ color: 'red' }}>Leave chat</ThemedText>
+                </Pressable>
+            ])
+        }
+
+        const chatMessageAddedListener = (payload: ChatMessageAddedPayload) => {
             if (payload.chatId === id) {
                 setMessages(prev => [payload.message, ...prev])
                 setCounter(prev => prev + 1)
             }
-        })
-        socket.on('chat:messageDeleted', (payload: string) => {
+        }
+        const chatMessageDeletedListener = (payload: string) => {
             setMessages(prev => prev.filter(message => message._id !== payload))
             setCounter(prev => prev > 0 ? prev - 1 : prev)
-        })
-        socket.on('chat:messageEdited', (payload: { text: string, id: string }) => {
+        }
+        const chatMessageEditedListener = (payload: ChatMessageEditedPayload) => {
             setMessages(prev => prev.map(message => message._id === payload.id ? { ...message, text: payload.text } : message))
-        })
+        }
+        const chatUserAddedListener = (payload: ChatUserAddedPayload) => {
+            if (payload.chatId === id) {
+                const parts = JSON.parse(participants as string) as Participant[]
+                parts.push(payload.participant)
+                participants = JSON.stringify(parts)
+            }
+        }
+        const chatUserRemovedListener = (payload: ChatUserRemovedPayload) => {
+            if (payload.chatId === id) {
+                const parts = JSON.parse(participants as string) as Participant[]
+                participants = JSON.stringify(parts.filter(participant => {
+                    if (isUser(participant.user)) {
+                        return participant.user._id !== payload.userId
+                    }
+                    return false
+                }))
+            }
+        }
+        const chatUserRoleChangedListener = (payload: ChatUserRoleChangedPayload) => {
+            if (payload.chatId === id) {
+                const parts = JSON.parse(participants as string) as Participant[]
+
+                for (let i = 0; i < parts.length; i++) {
+                    const user = parts[i].user
+                    if (isUser(user) && user._id === payload.userId) {
+                        parts[i] = { ...parts[i], isAdmin: true }
+                    }
+                }
+                participants = JSON.stringify(parts)
+            }
+        }
+        const chatPhotoUpdatedListener = (payload: ChatPhotoUpdatedPayload) => {
+            if (payload.chatId === id) {
+                setHeaderPhotoUrl(payload.url)
+            }
+        }
+
+        socket.emit('chat:joinRoom', id)
+        socket.on('chat:messageAdded', chatMessageAddedListener)
+        socket.on('chat:messageDeleted', chatMessageDeletedListener)
+        socket.on('chat:messageEdited', chatMessageEditedListener)
+        socket.on('chat:userAdded', chatUserAddedListener)
+        socket.on('chat:userRemoved', chatUserRemovedListener)
+        socket.on('chat:userRoleChanged', chatUserRoleChangedListener)
+        socket.on('chat:photoUpdated', chatPhotoUpdatedListener)
 
         return () => {
-            socket.emit('chat:leaveRoom', id)
-            socket.off('chat:messageAdded')
-            socket.off('chat:messageDeleted')
-            socket.off('chat:messageEdited')
+            socket.off('chat:messageAdded', chatMessageAddedListener)
+            socket.off('chat:messageDeleted', chatMessageDeletedListener)
+            socket.off('chat:messageEdited', chatMessageEditedListener)
+            socket.off('chat:userAdded', chatUserAddedListener)
+            socket.off('chat:userRemoved', chatUserRemovedListener)
+            socket.off('chat:userRoleChanged', chatUserRoleChangedListener)
+            socket.off('chat:photoUpdated', chatPhotoUpdatedListener)
         }
     }, [])
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerTitle: () => <>
+                <Image
+                    source={headerPhotoUrl.length === 0 ?
+                        type === 'single' ?
+                            require('@/assets/images/avatar.png') : require('@/assets/images/group-avatar.png')
+                        : { uri: headerPhotoUrl }}
+                    style={styles.image}
+                />
+                <ThemedText>{chatName}</ThemedText>
+            </>
+        })
+    }, [headerPhotoUrl])
 
     useEffect(() => {
         scrollToBottomOpacity.value = withTiming(isNearBottom ? 0 : 1, { duration: 300 })
@@ -260,10 +424,31 @@ const Chat = () => {
                 onRequestClose={onRequestCloseOptionsModal}
                 options={options}
             />
-            <FlatList
+            <CustomModal visible={confirmPhotoModalVisible} onRequestClose={onRequestCloseConfirmPhotoModal}>
+                <View style={{ gap: 8, alignItems: 'center' }}>
+                    <ThemedText>Would you like to set the following photo as a group photo?</ThemedText>
+                    <Image
+                        style={{ width: 100, height: 100, borderRadius: 100 }}
+                        source={{ uri: chatPhoto?.uri }}
+                    />
+                    {isLoading ? <ActivityIndicator size={'large'} /> : <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <CustomButton
+                            text='No'
+                            hasBackground={false}
+                            onPress={onRequestCloseConfirmPhotoModal}
+                        />
+                        <CustomButton
+                            text='Yes'
+                            onPress={onPressYesConfirmPhoto}
+                        />
+                    </View>}
+                </View>
+            </CustomModal>
+            <Animated.FlatList
                 ref={flatListRef}
                 data={messages}
                 renderItem={({ item }) => <MessageFlatListItem item={item} />}
+                keyExtractor={(item, index) => item._id ?? index.toString()}
                 ListFooterComponent={isLoading ?
                     <>
                         <View style={{ height: headerHeight }} />
@@ -278,6 +463,7 @@ const Chat = () => {
                 }}
                 onEndReachedThreshold={0.5}
                 onScroll={handleOnScroll}
+                itemLayoutAnimation={LinearTransition}
             />
             <Animated.View style={[styles.scrollToBottomBtnView, scollToBottomBtn, { backgroundColor: bubbleBackground }]}>
                 <TouchableOpacity style={styles.scrollToBottomBtn} onPress={handleOnPressScrollToBottom}>
@@ -296,7 +482,7 @@ const Chat = () => {
                     horizontal
                     contentContainerStyle={styles.previewFlatList}
                 />
-                <View style={[styles.inputView, { borderColor: textColor, }]}>
+                <View style={[styles.inputView, { borderColor: textColor }]}>
                     <TextInput
                         value={message.text}
                         placeholder='Type a message'
@@ -376,5 +562,8 @@ const styles = StyleSheet.create({
     },
     optionsBtn: {
         padding: 4
+    },
+    chatOptionsBtns: {
+        paddingVertical: 4
     }
 })

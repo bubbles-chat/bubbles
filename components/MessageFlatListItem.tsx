@@ -1,4 +1,4 @@
-import { Linking, Pressable, ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native'
+import { Linking, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native'
 import Message from '@/models/Message.model'
 import { useAppSelector } from '@/hooks/useAppSelector'
 import ParsedText, { ParseShape } from 'react-native-parsed-text'
@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { compareDates, getDayName } from '@/utils/date'
 import showToast from './Toast'
 import socket from '@/api/socket'
-import { memo, useState } from 'react'
+import { useState } from 'react'
 import CustomModal from './CustomModal'
 import { ThemedText } from './ThemedText'
 import CustomButton from './CustomButton'
@@ -15,6 +15,8 @@ import { MaterialIcons } from '@expo/vector-icons'
 import CustomTextInput from './CustomTextInput'
 import { InputState } from '@/types/types'
 import AttachmentMessageFlatListItems from './AttachmentMessageFlatListItems'
+import { isUser } from '@/utils/typeChecker'
+import { useThemeColor } from '@/hooks/useThemeColor'
 
 const MessageFlatListItem = ({ item }: { item: Message }) => {
     const { user } = useAppSelector(state => state.user)
@@ -28,8 +30,8 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
         isFocused: false
     })
 
-    const textColor = colorScheme === 'dark' ? Colors.dark.text : Colors.light.text
-    const tint = colorScheme === 'dark' ? Colors.dark.icon : Colors.light.icon
+    const textColor = useThemeColor({}, 'text') as string
+    const tint = useThemeColor({}, 'icon') as string
 
     const today = new Date(); today.setHours(0, 0, 0)
     const previousWeek = new Date(today);
@@ -137,8 +139,8 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
         }
     ]
 
-    if (user?._id === item.sender) {
-        const gradient = colorScheme === 'dark' ? Colors.dark.gradient.filter(color => color !== '#000') : Colors.light.gradient
+    if (isUser(item.sender) && user?._id === item.sender._id) {
+        const gradient = Colors.dark.gradient.filter(color => color !== '#000')
 
         return (
             <Pressable style={styles.pressable} onLongPress={handleUserMessageOnLongPress}>
@@ -216,18 +218,21 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
                     start={{ x: 0, y: 1 }}
                     end={{ x: 1, y: 0 }}
                 >
-                    {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems
-                        item={attachment}
-                        key={attachment.url}
-                        chatId={item.chatId as string}
-                    />)}
+                    <ThemedText style={[styles.senderName]}>you</ThemedText>
+                    <View style={styles.attachmentsView}>
+                        {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems
+                            item={attachment}
+                            key={attachment.url}
+                            chatId={item.chatId as string}
+                        />)}
+                    </View>
                     {item.text.length > 0 && <ParsedText
-                        style={{ color: textColor }}
+                        style={{ color: '#fff' }}
                         parse={parse}
                     >
                         {item.text}
                     </ParsedText>}
-                    <Text style={[styles.timeText, { color: tint }]}>{sentAtText}</Text>
+                    <Text style={[styles.timeText]}>{sentAtText}</Text>
                 </LinearGradient>
             </Pressable>
         )
@@ -236,11 +241,14 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
 
         return (
             <View style={[styles.container, { backgroundColor: bubbleBackground, alignSelf: 'flex-start' }]}>
-                {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems
-                    item={attachment}
-                    key={attachment.url}
-                    chatId={item.chatId as string}
-                />)}
+                {isUser(item.sender) && <ThemedText style={[styles.senderName, { color: tint }]}>{item.sender.displayName}</ThemedText>}
+                <View style={styles.attachmentsView}>
+                    {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems
+                        item={attachment}
+                        key={attachment.url}
+                        chatId={item.chatId as string}
+                    />)}
+                </View>
                 {item.text.length > 0 && <ParsedText
                     style={{ color: textColor }}
                     parse={parse}
@@ -253,20 +261,20 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
     }
 }
 
-export default memo(MessageFlatListItem)
+export default MessageFlatListItem
 
 const styles = StyleSheet.create({
     container: {
         maxWidth: '70%',
-        padding: 8,
-        borderRadius: 10,
-        gap: 8
+        padding: 4,
+        borderRadius: 10
     },
     detectedLinksText: {
         textDecorationLine: 'underline'
     },
     timeText: {
-        textAlign: 'right'
+        textAlign: 'right',
+        color: '#fff'
     },
     pressable: {
         alignSelf: 'flex-end'
@@ -288,5 +296,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 8,
         alignSelf: 'flex-start'
+    },
+    senderName: {
+        fontWeight: 'bold',
+        fontSize: 12,
+        color: '#fff'
+    },
+    attachmentsView: {
+        gap: 4
     }
 })

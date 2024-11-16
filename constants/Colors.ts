@@ -16,9 +16,9 @@ export const Colors = {
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
-    colors: lightLinearGradient,
-    buttonBackground: '#0ABAB5',
-    gradient: lightLinearGradient
+    colors: darkLinearGradient,
+    buttonBackground: tintColorLight,
+    gradient: darkLinearGradient
   },
   dark: {
     text: '#ECEDEE',
@@ -28,7 +28,7 @@ export const Colors = {
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
     colors: darkLinearGradient,
-    buttonBackground: '#1BC6B4',
+    buttonBackground: tintColorDark,
     gradient: darkLinearGradient
   },
 };

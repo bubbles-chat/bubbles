@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { addUserAsync, getUserByEmailAsync, signOutAsync } from "./userAsyncThunks";
+import { addUserAsync, createGroupChatAsync, getUserByEmailAsync, signOutAsync } from "./userAsyncThunks";
 import User from "@/models/User.model";
 
 interface UserState {
@@ -13,7 +13,7 @@ const initialState: UserState = {
 const userSlice = createSlice({
     name: 'user',
     initialState,
-    reducers: {}, // the reducers property is required by typescript even if it is empty
+    reducers: {},
     extraReducers: (builder) => {
         builder.addCase(addUserAsync.fulfilled, (state, action) => {
             state.user = action.payload
@@ -25,6 +25,12 @@ const userSlice = createSlice({
 
         builder.addCase(signOutAsync.fulfilled, (state, _) => {
             state.user = null
+        })
+
+        builder.addCase(createGroupChatAsync.fulfilled, (state, action) => {
+            if (action.payload) {
+                state.user = action.payload
+            }
         })
     }
 })
