@@ -26,9 +26,7 @@ function RootLayout() {
     if (user) {
       const email = user?.email ?? ''
       await updateAuthHeaders()
-
       socket.connect()
-
       dispatch(getUserByEmailAsync({ email }))
     } else {
       client.defaults.headers.common['Authorization'] = undefined
