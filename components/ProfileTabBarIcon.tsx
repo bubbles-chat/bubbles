@@ -29,7 +29,8 @@ const styles = StyleSheet.create({
         borderWidth: 2
     },
     image: {
-        flex: 1,
+        width: 20,
+        height: 20,
         backgroundColor: 'lightgrey'
     }
 })
