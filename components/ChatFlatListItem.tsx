@@ -76,13 +76,18 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
 
         const fetchOtherUser = async () => {
             try {
-                const filtered = item.participants.filter(participant => participant.user !== user?._id)
-                if (isUser(filtered[0].user)) {
-                    const response = await getUserById(filtered[0].user._id)
-
-                    if (response.status === 200) {
-                        setOtherUser(response.data.user)
+                const filtered = item.participants.filter(participant => {
+                    if (isUser(participant.user)) {
+                        return participant.user._id === user?._id
                     }
+                    return participant.user !== user?._id
+                })
+
+                if (isUser(filtered[0].user)) {
+                    setOtherUser(filtered[0].user)
+                } else {
+                    const response = await getUserById(filtered[0].user)
+                    setOtherUser(response.data.user)
                 }
             } catch (e) {
                 const err = e as AxiosError
