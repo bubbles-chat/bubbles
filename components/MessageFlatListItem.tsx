@@ -140,7 +140,7 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
     ]
 
     if (isUser(item.sender) && user?._id === item.sender._id) {
-        const gradient = colorScheme === 'dark' ? Colors.dark.gradient.filter(color => color !== '#000') : Colors.light.gradient
+        const gradient = Colors.dark.gradient.filter(color => color !== '#000')
 
         return (
             <Pressable style={styles.pressable} onLongPress={handleUserMessageOnLongPress}>
@@ -218,7 +218,7 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
                     start={{ x: 0, y: 1 }}
                     end={{ x: 1, y: 0 }}
                 >
-                    <ThemedText style={[styles.senderName, { color: tint }]}>you</ThemedText>
+                    <ThemedText style={[styles.senderName]}>you</ThemedText>
                     <View style={styles.attachmentsView}>
                         {item.attachmentsUrl.map(attachment => <AttachmentMessageFlatListItems
                             item={attachment}
@@ -227,12 +227,12 @@ const MessageFlatListItem = ({ item }: { item: Message }) => {
                         />)}
                     </View>
                     {item.text.length > 0 && <ParsedText
-                        style={{ color: textColor }}
+                        style={{ color: '#fff' }}
                         parse={parse}
                     >
                         {item.text}
                     </ParsedText>}
-                    <Text style={[styles.timeText, { color: tint }]}>{sentAtText}</Text>
+                    <Text style={[styles.timeText]}>{sentAtText}</Text>
                 </LinearGradient>
             </Pressable>
         )
@@ -273,7 +273,8 @@ const styles = StyleSheet.create({
         textDecorationLine: 'underline'
     },
     timeText: {
-        textAlign: 'right'
+        textAlign: 'right',
+        color: '#fff'
     },
     pressable: {
         alignSelf: 'flex-end'
@@ -298,7 +299,8 @@ const styles = StyleSheet.create({
     },
     senderName: {
         fontWeight: 'bold',
-        fontSize: 12
+        fontSize: 12,
+        color: '#fff'
     },
     attachmentsView: {
         gap: 4
