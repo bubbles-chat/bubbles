@@ -26,8 +26,17 @@
       "googleServicesFile": "./google-services.json",
       "userInterfaceStyle": "automatic",
       "splash": {
-        "image": "./assets/images/splash.png"
-      }
+        "image": "./assets/images/splash.png",
+        "resizeMode": "cover"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_MEDIA_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -76,6 +85,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "d2e2bd7d-19f3-444e-a942-7580ea485302"
+      }
     }
   }
 }
