@@ -78,7 +78,7 @@ const ChatFlatListItem = ({ item }: { item: Chat }) => {
             try {
                 const filtered = item.participants.filter(participant => {
                     if (isUser(participant.user)) {
-                        return participant.user._id === user?._id
+                        return participant.user._id !== user?._id
                     }
                     return participant.user !== user?._id
                 })
